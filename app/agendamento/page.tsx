@@ -10,6 +10,12 @@ import type { Barbeiro, Servico } from "@/types";
 import { useAutenticacao } from "@/contexts/AutenticacaoContext";
 import { supabase } from "@/lib/supabase";
 import { ModalCalendario } from "@/components/ModalCalendario";
+import { 
+  gerarHorariosDisponiveis, 
+  gerarDatasDisponiveis, 
+  validarDataPermitida,
+  calcularHorarioTermino 
+} from "@/lib/horarios";
 
 /**
  * Página de agendamento
@@ -388,25 +394,14 @@ export default function PaginaAgendamento() {
     }
   }, [dataSelecionada, barbeiroSelecionado]);
 
-  // Gera datas disponíveis (próximos 7 dias para o select)
-  const datasDisponiveis = Array.from({ length: 7 }, (_, i) => {
-    const data = addDays(new Date(), i + 1);
-    return {
-      valor: format(data, "yyyy-MM-dd"),
-      label: format(data, "EEEE, dd 'de' MMMM", { locale: ptBR }),
-    };
-  });
+  // Gera datas disponíveis (hoje + 15 dias)
+  const datasDisponiveis = gerarDatasDisponiveis();
 
-  // Gera todos horários possíveis (9h às 18h)
-  const todosHorarios = Array.from({ length: 19 }, (_, i) => {
-    const hora = 9 + Math.floor(i / 2);
-    const minuto = i % 2 === 0 ? 0 : 30;
-    const horario = `${hora.toString().padStart(2, "0")}:${minuto.toString().padStart(2, "0")}`;
-    return horario;
-  });
-
-  // Filtrar horários disponíveis removendo os ocupados
-  const horariosDisponiveis = todosHorarios.filter(h => !horariosOcupados.includes(h));
+  // Gera horários disponíveis baseado na duração do serviço selecionado
+  const servicoObj = servicos.find(s => s.id === servicoSelecionado);
+  const duracaoServico = servicoObj?.duracao || 30; // Padrão 30 minutos
+  
+  const horariosDisponiveis = gerarHorariosDisponiveis(duracaoServico, horariosOcupados);
 
   /**
    * Finaliza o agendamento
@@ -821,33 +816,22 @@ export default function PaginaAgendamento() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                          {todosHorarios.map((horario) => {
-                            const ocupado = horariosOcupados.includes(horario);
+                          {horariosDisponiveis.map((horario: string) => {
                             const selecionado = horarioSelecionado === horario;
                             
                             return (
                               <motion.button
                                 key={horario}
-                                whileHover={!ocupado ? { scale: 1.05 } : {}}
-                                whileTap={!ocupado ? { scale: 0.95 } : {}}
-                                onClick={() => !ocupado && setHorarioSelecionado(horario)}
-                                disabled={ocupado}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setHorarioSelecionado(horario)}
                                 className={`relative p-3 rounded-lg border-2 transition-all ${
-                                  ocupado
-                                    ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-400 dark:text-red-600 cursor-not-allowed opacity-60"
-                                    : selecionado
+                                  selecionado
                                     ? "border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold"
                                     : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-900 dark:text-zinc-100"
                                 }`}
                               >
-                                {ocupado && (
-                                  <span className="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-xl">
-                                    ✕
-                                  </span>
-                                )}
-                                <span className={ocupado ? "opacity-30" : ""}>
-                                  {horario}
-                                </span>
+                                {horario}
                               </motion.button>
                             );
                           })}
