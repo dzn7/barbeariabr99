@@ -9,8 +9,7 @@ import { Rodape } from "@/components/Rodape";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { registerPWA } from "@/lib/pwa-register";
-import Head from "next/head";
+import { registerPWA, unregisterPWA } from "@/lib/pwa-register";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,26 +30,45 @@ export default function RootLayout({
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
 
-  // Registra PWA apropriada
+  // Registra PWA apropriada e limpa SWs antigos
   useEffect(() => {
-    if (isDashboard) {
-      // Dashboard usa seu próprio SW
-      registerPWA('dashboard', {
-        onSuccess: () => console.log('[PWA] Dashboard registrado'),
-        onUpdate: () => console.log('[PWA] Dashboard atualizado'),
-      });
-    } else {
-      // Cliente usa SW padrão
-      registerPWA('client', {
-        onSuccess: () => console.log('[PWA] Cliente registrado'),
-        onUpdate: () => console.log('[PWA] Cliente atualizado'),
-      });
-    }
+    const initPWA = async () => {
+      // Primeiro, desregistra qualquer SW antigo
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          // Remove SWs que não são os nossos
+          const swUrl = registration.active?.scriptURL || '';
+          if (!swUrl.includes('sw-client.js') && !swUrl.includes('sw-dashboard.js')) {
+            console.log('[PWA] Removendo SW antigo:', swUrl);
+            await registration.unregister();
+          }
+        }
+      }
+
+      // Aguarda um pouco para garantir limpeza
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Registra o SW correto
+      if (isDashboard) {
+        registerPWA('dashboard', {
+          onSuccess: () => console.log('[PWA] Dashboard registrado'),
+          onUpdate: () => console.log('[PWA] Dashboard atualizado'),
+        });
+      } else {
+        registerPWA('client', {
+          onSuccess: () => console.log('[PWA] Cliente registrado'),
+          onUpdate: () => console.log('[PWA] Cliente atualizado'),
+        });
+      }
+    };
+
+    initPWA();
   }, [isDashboard]);
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <Head>
+      <head>
         <title>Barbearia BR99 - A Melhor Barbearia de Barras, PI</title>
         <meta name="description" content="Barbearia BR99 - Cortes modernos, barba bem feita e atendimento de qualidade em Barras, PI. Agende seu horário online!" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -73,7 +91,7 @@ export default function RootLayout({
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Barbearia BR99" />
         <meta name="twitter:description" content="A melhor barbearia de Barras, PI" />
-      </Head>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
