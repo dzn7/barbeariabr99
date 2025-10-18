@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, User, Scissors, Check } from "lucide-react";
+import { Calendar, Clock, User, Scissors, Check, Lock } from "lucide-react";
 import { Button, Card, Select, TextField, TextArea } from "@radix-ui/themes";
 import { format, addDays, setHours, setMinutes, startOfDay, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -39,10 +39,32 @@ export default function PaginaAgendamento() {
   const [campoTelefoneTocado, setCampoTelefoneTocado] = useState(false);
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
   const [modalCalendarioAberto, setModalCalendarioAberto] = useState(false);
+  const [barbeariaAberta, setBarbeariaAberta] = useState(true);
+  const [mensagemFechamento, setMensagemFechamento] = useState("");
+  const [horariosBloqueados, setHorariosBloqueados] = useState<string[]>([]);
 
   // Buscar barbeiros e serviços do Supabase
   useEffect(() => {
     buscarDados();
+    verificarStatusBarbearia();
+  }, []);
+  
+  // Realtime para status da barbearia
+  useEffect(() => {
+    const channel = supabase
+      .channel('status-barbearia')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'configuracoes_barbearia'
+      }, () => {
+        verificarStatusBarbearia();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Carregar dados do localStorage
@@ -62,6 +84,22 @@ export default function PaginaAgendamento() {
       setTelefoneCliente(usuario.user_metadata?.telefone || "");
     }
   }, [usuario]);
+
+  const verificarStatusBarbearia = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('configuracoes_barbearia')
+        .select('aberta, mensagem_fechamento')
+        .single();
+
+      if (error) throw error;
+      
+      setBarbeariaAberta(data?.aberta ?? true);
+      setMensagemFechamento(data?.mensagem_fechamento || "");
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+    }
+  };
 
   const buscarDados = async () => {
     try {
@@ -564,6 +602,40 @@ export default function PaginaAgendamento() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Aviso se barbearia estiver fechada
+  if (!barbeariaAberta) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-xl p-8 text-center border-2 border-red-200 dark:border-red-800"
+        >
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+              <Lock className="h-16 w-16 text-red-600 dark:text-red-400" />
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+            Barbearia Fechada
+          </h2>
+          
+          <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+            {mensagemFechamento || "No momento não estamos aceitando agendamentos. Volte mais tarde!"}
+          </p>
+          
+          <Button
+            onClick={() => window.location.href = '/'}
+            size="3"
+          >
+            Voltar para Início
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (agendamentoConcluido) {
     return (
