@@ -37,7 +37,7 @@ export default function PaginaAgendamento() {
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [campoTelefoneTocado, setCampoTelefoneTocado] = useState(false);
-  const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
+  const [horariosOcupados, setHorariosOcupados] = useState<Array<{horario: string, duracao: number}>>([]);
   const [modalCalendarioAberto, setModalCalendarioAberto] = useState(false);
   const [barbeariaAberta, setBarbeariaAberta] = useState(true);
   const [mensagemFechamento, setMensagemFechamento] = useState("");
@@ -293,7 +293,12 @@ export default function PaginaAgendamento() {
 
         const { data, error } = await supabase
           .from('agendamentos')
-          .select('id, data_hora, status')
+          .select(`
+            id, 
+            data_hora, 
+            status,
+            servicos (duracao)
+          `)
           .eq('barbeiro_id', barbeiroSelecionado)
           .gte('data_hora', inicioDia.toISOString())
           .lte('data_hora', fimDia.toISOString())
@@ -307,23 +312,15 @@ export default function PaginaAgendamento() {
         console.log('✅ [CLIENTE] Agendamentos encontrados:', data?.length || 0);
         console.log('📋 [CLIENTE] Dados completos:', data);
         
-        // DEBUG: Buscar TODOS agendamentos do dia para comparar
-        const { data: todosAgendamentos } = await supabase
-          .from('agendamentos')
-          .select('id, data_hora, status, barbeiro_id, barbeiros (id, nome)')
-          .gte('data_hora', inicioDia.toISOString())
-          .lte('data_hora', fimDia.toISOString())
-          .neq('status', 'cancelado');
-        
-        console.log('🔍 [DEBUG] TODOS os agendamentos do dia:', todosAgendamentos);
-        
-        const ocupados = (data || []).map(ag => {
+        // Converter para o novo formato: {horario, duracao}
+        const ocupados = (data || []).map((ag: any) => {
           const horario = format(new Date(ag.data_hora), 'HH:mm');
-          console.log(`🔴 Horário ocupado: ${horario}`, ag);
-          return horario;
+          const duracao = ag.servicos?.duracao || 30; // Padrão 30 minutos
+          console.log(`🔴 Horário ocupado: ${horario} (${duracao} min)`, ag);
+          return { horario, duracao };
         });
         
-        setHorariosOcupados(ocupados);
+        setHorariosOcupados(ocupados as any);
         console.log('📊 [CLIENTE] Total de horários ocupados:', ocupados.length, ocupados);
       } catch (error) {
         console.error('❌ Erro ao buscar horários ocupados:', error);
@@ -332,93 +329,22 @@ export default function PaginaAgendamento() {
 
     buscarHorariosOcupados();
 
-    // 🔥 REALTIME: Escutar mudanças em agendamentos
+    // 🔥 REALTIME: Escutar mudanças em agendamentos e recarregar
     if (dataSelecionada && barbeiroSelecionado) {
       const channel = supabase
         .channel(`horarios-${barbeiroSelecionado}-${dataSelecionada}`)
-        // Novo agendamento
         .on(
           'postgres_changes',
           {
-            event: 'INSERT',
+            event: '*',
             schema: 'public',
             table: 'agendamentos',
             filter: `barbeiro_id=eq.${barbeiroSelecionado}`
           },
           (payload) => {
-            const novoAgendamento = payload.new;
-            const dataAgendamento = format(new Date(novoAgendamento.data_hora), 'yyyy-MM-dd');
-            
-            if (dataAgendamento === dataSelecionada) {
-              const horario = format(new Date(novoAgendamento.data_hora), 'HH:mm');
-              console.log('🟢 [REALTIME] Novo agendamento:', horario);
-              setHorariosOcupados(prev => [...new Set([...prev, horario])]);
-            }
-          }
-        )
-        // Agendamento atualizado (cancelado ou remarcado)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'agendamentos',
-            filter: `barbeiro_id=eq.${barbeiroSelecionado}`
-          },
-          (payload) => {
-            const agendamentoAntigo = payload.old;
-            const agendamentoNovo = payload.new;
-            
-            console.log('🔄 [REALTIME] Agendamento atualizado:', { old: agendamentoAntigo, new: agendamentoNovo });
-            
-            // Se foi cancelado, remover
-            if (agendamentoNovo.status === 'cancelado') {
-              const horario = format(new Date(agendamentoNovo.data_hora), 'HH:mm');
-              console.log('🟡 [REALTIME] Agendamento cancelado:', horario);
-              setHorariosOcupados(prev => prev.filter(h => h !== horario));
-              return;
-            }
-            
-            // Se a data/hora mudou (remarcação)
-            if (agendamentoAntigo.data_hora !== agendamentoNovo.data_hora) {
-              const dataAntigaFormatada = format(new Date(agendamentoAntigo.data_hora), 'yyyy-MM-dd');
-              const dataNovaFormatada = format(new Date(agendamentoNovo.data_hora), 'yyyy-MM-dd');
-              const horarioAntigo = format(new Date(agendamentoAntigo.data_hora), 'HH:mm');
-              const horarioNovo = format(new Date(agendamentoNovo.data_hora), 'HH:mm');
-              
-              console.log('🔄 [REALTIME] Remarcação detectada:', {
-                de: `${dataAntigaFormatada} ${horarioAntigo}`,
-                para: `${dataNovaFormatada} ${horarioNovo}`
-              });
-              
-              // Se mudou DE esta data, remover horário antigo
-              if (dataAntigaFormatada === dataSelecionada) {
-                console.log('➖ Removendo horário antigo:', horarioAntigo);
-                setHorariosOcupados(prev => prev.filter(h => h !== horarioAntigo));
-              }
-              
-              // Se mudou PARA esta data, adicionar horário novo
-              if (dataNovaFormatada === dataSelecionada) {
-                console.log('➕ Adicionando horário novo:', horarioNovo);
-                setHorariosOcupados(prev => [...new Set([...prev, horarioNovo])]);
-              }
-            }
-          }
-        )
-        // Agendamento deletado
-        .on(
-          'postgres_changes',
-          {
-            event: 'DELETE',
-            schema: 'public',
-            table: 'agendamentos',
-            filter: `barbeiro_id=eq.${barbeiroSelecionado}`
-          },
-          (payload) => {
-            const agendamento = payload.old;
-            const horario = format(new Date(agendamento.data_hora), 'HH:mm');
-            console.log('🔴 [REALTIME] Agendamento deletado:', horario);
-            setHorariosOcupados(prev => prev.filter(h => h !== horario));
+            console.log('🔄 [REALTIME] Mudança detectada, recarregando horários...', payload);
+            // Recarregar horários ao invés de tentar manipular o array
+            buscarHorariosOcupados();
           }
         )
         .subscribe((status) => {

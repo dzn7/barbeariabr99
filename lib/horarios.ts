@@ -15,53 +15,53 @@ export const HORARIO_FUNCIONAMENTO = {
 };
 
 /**
- * Gera todos os horários possíveis baseado na duração do serviço
+ * Gera todos os horários possíveis em intervalos fixos de 30 minutos
+ * Bloqueia horários que conflitam com agendamentos existentes
  * 
- * @param duracaoServico - Duração do serviço em minutos
- * @param horariosOcupados - Array de horários já ocupados no formato 'HH:mm'
+ * @param duracaoServico - Duração do serviço em minutos (usado para calcular conflitos)
+ * @param agendamentosOcupados - Array de objetos com horário e duração dos agendamentos
  * @returns Array de horários disponíveis
  * 
  * @example
- * // Serviço de 25 minutos
- * gerarHorariosDisponiveis(25, ['09:00', '10:30'])
- * // Retorna: ['09:25', '09:50', '10:15', '10:55', ...]
+ * // Alguém marcou às 09:00 um serviço de 40 minutos
+ * gerarHorariosDisponiveis(30, [{horario: '09:00', duracao: 40}])
+ * // Retorna: ['09:40', '10:00', '10:30', ...] (09:00 e 09:30 bloqueados)
  */
 export function gerarHorariosDisponiveis(
   duracaoServico: number,
-  horariosOcupados: string[] = []
+  agendamentosOcupados: Array<{horario: string, duracao: number}> = []
 ): string[] {
   const horarios: string[] = [];
-  const dataBase = new Date(2000, 0, 1); // Data fictícia para cálculos
+  const dataBase = new Date(2000, 0, 1);
   
-  // Converter horários de início e fim para Date
   const horaInicio = parse(HORARIO_FUNCIONAMENTO.inicio, 'HH:mm', dataBase);
   const horaFim = parse(HORARIO_FUNCIONAMENTO.fim, 'HH:mm', dataBase);
   
   let horarioAtual = horaInicio;
   
-  // Gerar horários de início possíveis
+  // Gerar todos os horários em intervalos de 30 minutos
   while (isBefore(horarioAtual, horaFim)) {
     const horarioFormatado = format(horarioAtual, 'HH:mm');
-    
-    // Calcular horário de término deste agendamento
     const horarioTermino = addMinutes(horarioAtual, duracaoServico);
     
     // Verificar se o término não ultrapassa o horário de fechamento
     if (isBefore(horarioTermino, horaFim) || isEqual(horarioTermino, horaFim)) {
-      // Verificar se não conflita com horários ocupados
-      const temConflito = horariosOcupados.some(ocupado => {
-        const horarioOcupadoDate = parse(ocupado, 'HH:mm', dataBase);
-        const terminoOcupado = addMinutes(horarioOcupadoDate, duracaoServico);
+      // Verificar se não conflita com agendamentos ocupados
+      const temConflito = agendamentosOcupados.some(agendamento => {
+        const inicioOcupado = parse(agendamento.horario, 'HH:mm', dataBase);
+        const fimOcupado = addMinutes(inicioOcupado, agendamento.duracao);
         
         // Conflito se:
-        // 1. Horário atual está dentro de um agendamento ocupado
-        // 2. Horário de término está dentro de um agendamento ocupado
-        // 3. Horário atual começa antes e termina depois de um ocupado
+        // 1. Novo agendamento começa durante um ocupado
+        // 2. Novo agendamento termina durante um ocupado  
+        // 3. Novo agendamento engloba um ocupado
         return (
-          (isAfter(horarioAtual, horarioOcupadoDate) && isBefore(horarioAtual, terminoOcupado)) ||
-          (isAfter(horarioTermino, horarioOcupadoDate) && isBefore(horarioTermino, terminoOcupado)) ||
-          (isBefore(horarioAtual, horarioOcupadoDate) && isAfter(horarioTermino, terminoOcupado)) ||
-          isEqual(horarioAtual, horarioOcupadoDate)
+          // Início do novo está dentro do ocupado
+          (isAfter(horarioAtual, inicioOcupado) || isEqual(horarioAtual, inicioOcupado)) && isBefore(horarioAtual, fimOcupado) ||
+          // Fim do novo está dentro do ocupado
+          isAfter(horarioTermino, inicioOcupado) && (isBefore(horarioTermino, fimOcupado) || isEqual(horarioTermino, fimOcupado)) ||
+          // Novo engloba o ocupado
+          isBefore(horarioAtual, inicioOcupado) && isAfter(horarioTermino, fimOcupado)
         );
       });
       
@@ -70,9 +70,8 @@ export function gerarHorariosDisponiveis(
       }
     }
     
-    // Avançar para o próximo horário possível
-    // Usa a duração do serviço como intervalo
-    horarioAtual = addMinutes(horarioAtual, duracaoServico);
+    // Avançar 30 minutos (intervalo fixo)
+    horarioAtual = addMinutes(horarioAtual, 30);
   }
   
   return horarios;

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { 
-  Calendar, DollarSign, Users, TrendingUp, TrendingDown, Package, Percent, LogOut, Scissors, Edit3, Clock, Menu, X
+  Calendar, DollarSign, Users, TrendingUp, TrendingDown, Package, Percent, LogOut, Scissors, Edit3, Clock, Menu, X, Settings
 } from "lucide-react";
 import { Tabs } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,7 @@ import { GestaoUsuarios } from "@/components/dashboard/GestaoUsuarios";
 import { GestaoServicos } from "@/components/dashboard/GestaoServicos";
 import { RemarcacaoAgendamento } from "@/components/dashboard/RemarcacaoAgendamento";
 import { GestaoHorarios } from "@/components/dashboard/GestaoHorarios";
+import { GestaoHorariosAvancada } from "@/components/dashboard/GestaoHorariosAvancada";
 import { AlternadorTema } from "@/components/AlternadorTema";
 import { supabase } from "@/lib/supabase";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -310,6 +311,10 @@ export default function DashboardCompleto() {
               <Clock className="w-4 h-4 mr-2" />
               Horários
             </Tabs.Trigger>
+            <Tabs.Trigger value="configuracoes">
+              <Settings className="w-4 h-4 mr-2" />
+              Configurações
+            </Tabs.Trigger>
           </Tabs.List>
 
           {/* Menu Mobile */}
@@ -332,6 +337,7 @@ export default function DashboardCompleto() {
                   { value: "servicos", icon: Edit3, label: "Serviços" },
                   { value: "remarcacao", icon: Clock, label: "Remarcação" },
                   { value: "horarios", icon: Clock, label: "Horários" },
+                  { value: "configuracoes", icon: Settings, label: "Configurações" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -465,6 +471,25 @@ export default function DashboardCompleto() {
           {/* Horários */}
           <Tabs.Content value="horarios">
             <GestaoHorarios />
+          </Tabs.Content>
+
+          {/* Configurações */}
+          <Tabs.Content value="configuracoes">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Settings className="w-8 h-8 text-zinc-700 dark:text-zinc-300" />
+                <div>
+                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                    Configurações da Barbearia
+                  </h2>
+                  <p className="text-zinc-600 dark:text-zinc-400">
+                    Gerencie horários, bloqueios e funcionamento da barbearia
+                  </p>
+                </div>
+              </div>
+              
+              <GestaoHorariosAvancada />
+            </div>
           </Tabs.Content>
         </Tabs.Root>
       </div>
