@@ -392,10 +392,10 @@ export function GestaoHorarios() {
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Barbeiro (opcional)
               </label>
-              <Select.Root value={barbeiroSelecionado} onValueChange={setBarbeiroSelecionado}>
+              <Select.Root value={barbeiroSelecionado || "todos"} onValueChange={(val) => setBarbeiroSelecionado(val === "todos" ? "" : val)}>
                 <Select.Trigger placeholder="Todos os barbeiros" className="w-full" />
                 <Select.Content>
-                  <Select.Item value="">Todos os barbeiros</Select.Item>
+                  <Select.Item value="todos">Todos os barbeiros</Select.Item>
                   {barbeiros.map((barbeiro) => (
                     <Select.Item key={barbeiro.id} value={barbeiro.id}>
                       {barbeiro.nome}
