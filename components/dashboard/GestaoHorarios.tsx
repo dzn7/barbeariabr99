@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Clock, Save, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { Button, Switch, Dialog } from "@radix-ui/themes";
+import { Clock, Save, CheckCircle, XCircle, AlertCircle, Ban, Calendar as CalendarIcon } from "lucide-react";
+import { Button, Switch, Dialog, Select, TextField, TextArea } from "@radix-ui/themes";
 import { supabase } from "@/lib/supabase";
+import { format, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface HorarioDia {
   aberto: boolean;
@@ -46,6 +48,12 @@ const diasSemana = [
 export function GestaoHorarios() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [modalBloqueioAberto, setModalBloqueioAberto] = useState(false);
+  const [dataBloqueio, setDataBloqueio] = useState("");
+  const [horarioBloqueio, setHorarioBloqueio] = useState("");
+  const [motivoBloqueio, setMotivoBloqueio] = useState("");
+  const [barbeiros, setBarbeiros] = useState<any[]>([]);
+  const [barbeiroSelecionado, setBarbeiroSelecionado] = useState("");
   const [horarios, setHorarios] = useState<HorarioSemana>({
     segunda: { aberto: true, inicio: "09:00", fim: "18:00" },
     terca: { aberto: true, inicio: "09:00", fim: "18:00" },
@@ -64,7 +72,22 @@ export function GestaoHorarios() {
 
   useEffect(() => {
     buscarHorarios();
+    buscarBarbeiros();
   }, []);
+
+  const buscarBarbeiros = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('barbeiros')
+        .select('id, nome')
+        .eq('ativo', true);
+
+      if (error) throw error;
+      setBarbeiros(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar barbeiros:', error);
+    }
+  };
 
   const buscarHorarios = async () => {
     try {
@@ -137,6 +160,40 @@ export function GestaoHorarios() {
     setHorarios(novosHorarios);
   };
 
+  const criarBloqueio = async () => {
+    if (!dataBloqueio || !horarioBloqueio) {
+      mostrarFeedback('erro', 'Campos obrigatórios', 'Preencha a data e o horário do bloqueio');
+      return;
+    }
+
+    try {
+      const dataHora = `${dataBloqueio}T${horarioBloqueio}:00`;
+      
+      const { error } = await supabase
+        .from('horarios_bloqueados')
+        .insert({
+          barbeiro_id: barbeiroSelecionado || null,
+          data_hora: dataHora,
+          motivo: motivoBloqueio || 'Bloqueio manual',
+          tipo: 'bloqueio_manual'
+        });
+
+      if (error) throw error;
+
+      mostrarFeedback('sucesso', 'Horário bloqueado', 'O horário foi bloqueado com sucesso!');
+      setModalBloqueioAberto(false);
+      
+      // Limpar campos
+      setDataBloqueio("");
+      setHorarioBloqueio("");
+      setMotivoBloqueio("");
+      setBarbeiroSelecionado("");
+    } catch (error: any) {
+      console.error('Erro ao criar bloqueio:', error);
+      mostrarFeedback('erro', 'Erro ao bloquear', error.message || 'Não foi possível bloquear o horário');
+    }
+  };
+
   if (carregando) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -157,14 +214,24 @@ export function GestaoHorarios() {
             Configure os horários que aparecem em todo o site
           </p>
         </div>
-        <Button
-          onClick={salvarHorarios}
-          disabled={salvando}
-          className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {salvando ? 'Salvando...' : 'Salvar Alterações'}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => setModalBloqueioAberto(true)}
+            variant="outline"
+            className="cursor-pointer"
+          >
+            <Ban className="w-4 h-4 mr-2" />
+            Bloquear Horário
+          </Button>
+          <Button
+            onClick={salvarHorarios}
+            disabled={salvando}
+            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {salvando ? 'Salvando...' : 'Salvar Alterações'}
+          </Button>
+        </div>
       </div>
 
       {/* Ação Rápida */}
@@ -277,6 +344,94 @@ export function GestaoHorarios() {
           na página inicial, na seção "Como nos encontrar" e em outras partes do site.
         </p>
       </div>
+
+      {/* Modal de Bloqueio de Horário */}
+      <Dialog.Root open={modalBloqueioAberto} onOpenChange={setModalBloqueioAberto}>
+        <Dialog.Content style={{ maxWidth: 500 }}>
+          <Dialog.Title className="text-xl font-bold mb-4">
+            <div className="flex items-center gap-2">
+              <Ban className="w-6 h-6" />
+              Bloquear Horário
+            </div>
+          </Dialog.Title>
+          
+          <Dialog.Description className="text-zinc-600 dark:text-zinc-400 mb-6">
+            Bloqueie um horário específico para impedir novos agendamentos
+          </Dialog.Description>
+
+          <div className="space-y-4">
+            {/* Data */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Data *
+              </label>
+              <TextField.Root
+                type="date"
+                value={dataBloqueio}
+                onChange={(e: any) => setDataBloqueio(e.target.value)}
+                min={format(new Date(), 'yyyy-MM-dd')}
+                size="3"
+              />
+            </div>
+
+            {/* Horário */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Horário *
+              </label>
+              <TextField.Root
+                type="time"
+                value={horarioBloqueio}
+                onChange={(e: any) => setHorarioBloqueio(e.target.value)}
+                size="3"
+              />
+            </div>
+
+            {/* Barbeiro */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Barbeiro (opcional)
+              </label>
+              <Select.Root value={barbeiroSelecionado} onValueChange={setBarbeiroSelecionado}>
+                <Select.Trigger placeholder="Todos os barbeiros" className="w-full" />
+                <Select.Content>
+                  <Select.Item value="">Todos os barbeiros</Select.Item>
+                  {barbeiros.map((barbeiro) => (
+                    <Select.Item key={barbeiro.id} value={barbeiro.id}>
+                      {barbeiro.nome}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+            </div>
+
+            {/* Motivo */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Motivo (opcional)
+              </label>
+              <TextArea
+                value={motivoBloqueio}
+                onChange={(e: any) => setMotivoBloqueio(e.target.value)}
+                placeholder="Ex: Reunião, folga, manutenção..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end mt-6">
+            <Dialog.Close>
+              <Button variant="soft" color="gray" className="cursor-pointer">
+                Cancelar
+              </Button>
+            </Dialog.Close>
+            <Button onClick={criarBloqueio} className="cursor-pointer bg-red-600 text-white hover:bg-red-700">
+              <Ban className="w-4 h-4 mr-2" />
+              Bloquear
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Modal de Feedback */}
       <Dialog.Root open={modalFeedback.aberto} onOpenChange={(aberto) => setModalFeedback({ ...modalFeedback, aberto })}>
