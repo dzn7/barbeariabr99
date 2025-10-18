@@ -6,7 +6,10 @@ import { TemaProvider } from "@/contexts/TemaContext";
 import { AutenticacaoProvider } from "@/contexts/AutenticacaoContext";
 import { Cabecalho } from "@/components/Cabecalho";
 import { Rodape } from "@/components/Rodape";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { registerPWA } from "@/lib/pwa-register";
 import Head from "next/head";
 import "./globals.css";
 
@@ -28,6 +31,23 @@ export default function RootLayout({
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
 
+  // Registra PWA apropriada
+  useEffect(() => {
+    if (isDashboard) {
+      // Dashboard usa seu próprio SW
+      registerPWA('dashboard', {
+        onSuccess: () => console.log('[PWA] Dashboard registrado'),
+        onUpdate: () => console.log('[PWA] Dashboard atualizado'),
+      });
+    } else {
+      // Cliente usa SW padrão
+      registerPWA('client', {
+        onSuccess: () => console.log('[PWA] Cliente registrado'),
+        onUpdate: () => console.log('[PWA] Cliente atualizado'),
+      });
+    }
+  }, [isDashboard]);
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <Head>
@@ -41,7 +61,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="manifest" href={isDashboard ? "/manifest-dashboard.json" : "/manifest-client.json"} />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
@@ -73,6 +93,9 @@ export default function RootLayout({
                   <Rodape />
                 </div>
               )}
+              
+              {/* Notificação de atualização PWA */}
+              <PWAUpdateNotification />
             </Theme>
           </AutenticacaoProvider>
         </TemaProvider>

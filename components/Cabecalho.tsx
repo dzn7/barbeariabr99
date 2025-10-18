@@ -85,13 +85,13 @@ export function Cabecalho() {
                 transition={{ duration: 0.3, type: "spring" }}
                 className="relative"
               >
-                <div className="relative w-40 h-16 md:w-48 md:h-20">
+                <div className="relative w-48 h-16 md:w-52 md:h-20">
                   <Image
                     src="/assets/logo.PNG"
                     alt="Logo Barbearia BR99"
                     fill
-                    sizes="(max-width: 768px) 160px, 192px"
-                    className="object-contain"
+                    sizes="(max-width: 768px) 192px, 208px"
+                    className="object-contain object-left"
                     priority
                   />
                 </div>
