@@ -81,7 +81,7 @@ export default function PaginaAgendamento() {
       
       // Selecionar automaticamente Matheus Viveiros se houver apenas 1 barbeiro ou se for ele
       if (barbeirosData && barbeirosData.length > 0) {
-        const matheus = barbeirosData.find(b => b.nome.includes('Matheus'));
+        const matheus = barbeirosData.find((b: any) => b.nome.includes('Matheus'));
         if (matheus) {
           setBarbeiroSelecionado(matheus.id);
           console.log('🎯 Barbeiro padrão selecionado:', matheus.nome);
