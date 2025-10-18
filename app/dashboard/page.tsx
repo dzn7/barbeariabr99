@@ -218,18 +218,18 @@ export default function DashboardCompleto() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-4">
-              <div className="relative w-32 h-12 md:w-40 md:h-14">
+              <div className="relative w-36 h-12 md:w-44 md:h-14 flex items-center">
                 <Image
                   src="/assets/logo.PNG"
                   alt="Barbearia BR99"
                   fill
-                  sizes="(max-width: 768px) 128px, 160px"
-                  className="object-contain"
+                  sizes="(max-width: 768px) 144px, 176px"
+                  className="object-contain object-left"
                   priority
                 />
               </div>
-              <div className="hidden sm:block border-l border-zinc-300 dark:border-zinc-700 pl-4 h-10">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+              <div className="hidden sm:flex items-center border-l border-zinc-300 dark:border-zinc-700 pl-4 h-10">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">
                   Dashboard Administrativo
                 </p>
               </div>
