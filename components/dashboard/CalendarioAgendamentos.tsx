@@ -14,7 +14,8 @@ import {
   XCircle,
   Scissors,
   DollarSign,
-  Filter
+  Filter,
+  Trash2
 } from "lucide-react";
 import { format, addDays, isSameDay, parseISO, startOfDay, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -75,6 +76,8 @@ export function CalendarioAgendamentos() {
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<Agendamento | null>(null);
+  const [modalConfirmacao, setModalConfirmacao] = useState(false);
+  const [processando, setProcessando] = useState(false);
 
   // Calcular próximos 7 dias
   const diasExibicao = useMemo(() => {
@@ -170,6 +173,30 @@ export function CalendarioAgendamentos() {
       setAgendamentoSelecionado(null);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+    }
+  };
+
+  // Deletar agendamento
+  const deletarAgendamento = async () => {
+    if (!agendamentoSelecionado) return;
+    
+    setProcessando(true);
+    try {
+      const { error } = await supabase
+        .from('agendamentos')
+        .delete()
+        .eq('id', agendamentoSelecionado.id);
+
+      if (error) throw error;
+      
+      setModalConfirmacao(false);
+      setAgendamentoSelecionado(null);
+      buscarAgendamentos();
+    } catch (error) {
+      console.error('Erro ao deletar agendamento:', error);
+      alert('Erro ao deletar agendamento. Verifique as permissões no Supabase.');
+    } finally {
+      setProcessando(false);
     }
   };
 
@@ -551,43 +578,132 @@ export function CalendarioAgendamentos() {
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                  {agendamentoSelecionado.status === 'pendente' && (
-                    <Button
-                      onClick={() => atualizarStatus(agendamentoSelecionado.id, 'confirmado')}
-                      className="flex-1"
-                      color="green"
-                      size="3"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Confirmar
-                    </Button>
-                  )}
-                  
-                  {agendamentoSelecionado.status !== 'cancelado' && (
-                    <Button
-                      onClick={() => atualizarStatus(agendamentoSelecionado.id, 'cancelado')}
-                      variant="soft"
-                      color="red"
-                      className="flex-1"
-                      size="3"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      Cancelar
-                    </Button>
-                  )}
+                <div className="flex flex-col gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {agendamentoSelecionado.status === 'pendente' && (
+                      <Button
+                        onClick={() => atualizarStatus(agendamentoSelecionado.id, 'confirmado')}
+                        className="flex-1"
+                        color="green"
+                        size="3"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Confirmar
+                      </Button>
+                    )}
+                    
+                    {agendamentoSelecionado.status !== 'cancelado' && (
+                      <Button
+                        onClick={() => atualizarStatus(agendamentoSelecionado.id, 'cancelado')}
+                        variant="soft"
+                        color="red"
+                        className="flex-1"
+                        size="3"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Cancelar
+                      </Button>
+                    )}
 
-                  <a
-                    href={`https://wa.me/55${agendamentoSelecionado.clientes?.telefone.replace(/\D/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1"
+                    <a
+                      href={`https://wa.me/55${agendamentoSelecionado.clientes?.telefone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1"
+                    >
+                      <Button variant="soft" className="w-full" color="green" size="3">
+                        <WhatsAppIcon className="w-4 h-4" />
+                        WhatsApp
+                      </Button>
+                    </a>
+                  </div>
+
+                  <Button
+                    onClick={() => setModalConfirmacao(true)}
+                    variant="soft"
+                    color="red"
+                    className="w-full"
+                    size="3"
                   >
-                    <Button variant="soft" className="w-full" color="green" size="3">
-                      <WhatsAppIcon className="w-4 h-4" />
-                      WhatsApp
-                    </Button>
-                  </a>
+                    <Trash2 className="w-4 h-4" />
+                    Deletar Agendamento
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AnimatePresence>
+        {modalConfirmacao && agendamentoSelecionado && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+            onClick={() => !processando && setModalConfirmacao(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-zinc-900 rounded-xl p-6 max-w-md w-full border border-zinc-200 dark:border-zinc-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
+                    <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
+                    Confirmar Exclusão
+                  </h3>
+                </div>
+
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Tem certeza que deseja deletar permanentemente o agendamento de{' '}
+                  <strong className="text-zinc-900 dark:text-white">
+                    {agendamentoSelecionado.clientes?.nome}
+                  </strong>?
+                </p>
+
+                <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-800">
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    ⚠️ Esta ação não pode ser desfeita. O agendamento será removido permanentemente do sistema.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={() => setModalConfirmacao(false)}
+                    variant="soft"
+                    className="flex-1"
+                    size="3"
+                    disabled={processando}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={deletarAgendamento}
+                    color="red"
+                    className="flex-1"
+                    size="3"
+                    disabled={processando}
+                  >
+                    {processando ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                        Deletando...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Deletar
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </motion.div>

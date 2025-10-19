@@ -385,84 +385,170 @@ export function GestaoHorariosAvancada() {
         className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800"
       >
         <div className="flex items-center gap-3 mb-6">
-          <Clock className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Horários de Funcionamento
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Abertura
-            </label>
-            <TextField.Root
-              type="time"
-              value={config.horario_abertura}
-              onChange={(e: any) => setConfig({ ...config, horario_abertura: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Fechamento
-            </label>
-            <TextField.Root
-              type="time"
-              value={config.horario_fechamento}
-              onChange={(e: any) => setConfig({ ...config, horario_fechamento: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Início do Almoço (opcional)
-            </label>
-            <TextField.Root
-              type="time"
-              value={config.intervalo_almoco_inicio || ""}
-              onChange={(e: any) => setConfig({ ...config, intervalo_almoco_inicio: e.target.value || null })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Fim do Almoço (opcional)
-            </label>
-            <TextField.Root
-              type="time"
-              value={config.intervalo_almoco_fim || ""}
-              onChange={(e: any) => setConfig({ ...config, intervalo_almoco_fim: e.target.value || null })}
-            />
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+              Horários de Funcionamento
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Configure os horários de abertura, fechamento e intervalo de almoço
+            </p>
           </div>
         </div>
 
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+        {/* Horário Principal */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6 mb-6 border-2 border-blue-200 dark:border-blue-800">
+          <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Horário de Expediente
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <Unlock className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                🕐 Horário de Abertura
+              </label>
+              <TextField.Root
+                type="time"
+                value={config.horario_abertura}
+                onChange={(e: any) => setConfig({ ...config, horario_abertura: e.target.value })}
+                size="3"
+                className="text-lg font-semibold"
+              />
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
+                Quando a barbearia abre para atendimento
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <Lock className="w-4 h-4 text-red-600 dark:text-red-400" />
+                </div>
+                🕐 Horário de Fechamento
+              </label>
+              <TextField.Root
+                type="time"
+                value={config.horario_fechamento}
+                onChange={(e: any) => setConfig({ ...config, horario_fechamento: e.target.value })}
+                size="3"
+                className="text-lg font-semibold"
+              />
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
+                Quando a barbearia fecha
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Intervalo de Almoço */}
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-xl p-6 border-2 border-orange-200 dark:border-orange-800">
+          <h4 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center gap-2">
+            <span className="text-2xl">🍽️</span>
+            Intervalo de Almoço (Opcional)
+          </h4>
+          <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
+            Defina o horário em que não haverá atendimentos para o almoço
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+              <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+                ⏰ Início do Almoço
+              </label>
+              <TextField.Root
+                type="time"
+                value={config.intervalo_almoco_inicio || ""}
+                onChange={(e: any) => setConfig({ ...config, intervalo_almoco_inicio: e.target.value || null })}
+                placeholder="Ex: 12:00"
+                size="3"
+              />
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
+                Deixe vazio se não houver intervalo
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+              <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+                ⏰ Fim do Almoço
+              </label>
+              <TextField.Root
+                type="time"
+                value={config.intervalo_almoco_fim || ""}
+                onChange={(e: any) => setConfig({ ...config, intervalo_almoco_fim: e.target.value || null })}
+                placeholder="Ex: 14:00"
+                size="3"
+              />
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
+                Quando os atendimentos retornam
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dias de Funcionamento */}
+        <div className="mt-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
+          <h4 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
             Dias de Funcionamento
-          </label>
-          <div className="flex flex-wrap gap-2">
+          </h4>
+          <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+            Selecione os dias da semana em que a barbearia funciona
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {diasSemana.map(dia => (
               <Button
                 key={dia.valor}
                 onClick={() => toggleDia(dia.valor)}
                 variant={config.dias_funcionamento?.includes(dia.valor) ? "solid" : "outline"}
-                color={config.dias_funcionamento?.includes(dia.valor) ? "blue" : "gray"}
+                color={config.dias_funcionamento?.includes(dia.valor) ? "purple" : "gray"}
+                size="3"
+                className="h-16 flex flex-col items-center justify-center gap-1"
               >
-                {dia.label}
+                <span className="text-lg font-bold">{dia.label.substring(0, 3)}</span>
+                <span className="text-xs opacity-75">{dia.label}</span>
               </Button>
             ))}
           </div>
+          <div className="mt-4 flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300">
+            <AlertCircle className="w-4 h-4" />
+            <span>
+              {config.dias_funcionamento?.length || 0} dia(s) selecionado(s)
+            </span>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        {/* Botão de Salvar */}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            onClick={() => carregarDados()}
+            variant="soft"
+            color="gray"
+            size="3"
+            disabled={salvando}
+          >
+            <X className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
           <Button
             onClick={salvarConfiguracao}
             disabled={salvando}
             size="3"
+            color="green"
+            className="min-w-[200px]"
           >
-            <Save className="w-4 h-4 mr-2" />
-            Salvar Configurações
+            {salvando ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Salvar Configurações
+              </>
+            )}
           </Button>
         </div>
       </motion.div>
@@ -541,12 +627,12 @@ export function GestaoHorariosAvancada() {
             <div>
               <label className="block text-sm font-medium mb-2">Barbeiro (opcional)</label>
               <Select.Root
-                value={novoBloqueio.barbeiro_id}
-                onValueChange={(value) => setNovoBloqueio({ ...novoBloqueio, barbeiro_id: value })}
+                value={novoBloqueio.barbeiro_id || "all"}
+                onValueChange={(value) => setNovoBloqueio({ ...novoBloqueio, barbeiro_id: value === "all" ? "" : value })}
               >
                 <Select.Trigger placeholder="Todos os barbeiros" />
                 <Select.Content>
-                  <Select.Item value="">Todos os barbeiros</Select.Item>
+                  <Select.Item value="all">Todos os barbeiros</Select.Item>
                   {barbeiros.map(b => (
                     <Select.Item key={b.id} value={b.id}>{b.nome}</Select.Item>
                   ))}

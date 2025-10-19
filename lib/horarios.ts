@@ -6,13 +6,25 @@
 import { addMinutes, format, parse, isAfter, isBefore, isEqual } from 'date-fns';
 
 /**
- * Configuração de horário de funcionamento
+ * Configuração padrão de horário de funcionamento (fallback)
  */
-export const HORARIO_FUNCIONAMENTO = {
+export const HORARIO_FUNCIONAMENTO_PADRAO = {
   inicio: '09:00',
-  fim: '18:00',
-  intervaloMinimo: 5, // Intervalo mínimo entre agendamentos em minutos
+  fim: '19:00',
+  intervaloMinimo: 5,
+  intervaloAlmocoInicio: null as string | null,
+  intervaloAlmocoFim: null as string | null,
 };
+
+/**
+ * Interface para configurações de horário
+ */
+export interface ConfiguracaoHorario {
+  inicio: string;
+  fim: string;
+  intervaloAlmocoInicio?: string | null;
+  intervaloAlmocoFim?: string | null;
+}
 
 /**
  * Tipo para horário com status
@@ -27,19 +39,30 @@ export interface HorarioComStatus {
  * 
  * @param duracaoServico - Duração do serviço em minutos
  * @param agendamentosOcupados - Array de objetos com horário e duração dos agendamentos
+ * @param config - Configurações de horário (abertura, fechamento, almoço)
  * @returns Array de objetos com horário e status
  */
 export function gerarTodosHorarios(
   duracaoServico: number,
-  agendamentosOcupados: Array<{horario: string, duracao: number}> = []
+  agendamentosOcupados: Array<{horario: string, duracao: number}> = [],
+  config: ConfiguracaoHorario = HORARIO_FUNCIONAMENTO_PADRAO
 ): HorarioComStatus[] {
   const horarios: HorarioComStatus[] = [];
   const dataBase = new Date(2000, 0, 1);
   
-  const horaInicio = parse(HORARIO_FUNCIONAMENTO.inicio, 'HH:mm', dataBase);
-  const horaFim = parse(HORARIO_FUNCIONAMENTO.fim, 'HH:mm', dataBase);
+  const horaInicio = parse(config.inicio, 'HH:mm', dataBase);
+  const horaFim = parse(config.fim, 'HH:mm', dataBase);
   
   let horarioAtual = horaInicio;
+  
+  // Intervalos de almoço (se configurados)
+  let almocoInicio: Date | null = null;
+  let almocoFim: Date | null = null;
+  
+  if (config.intervaloAlmocoInicio && config.intervaloAlmocoFim) {
+    almocoInicio = parse(config.intervaloAlmocoInicio, 'HH:mm', dataBase);
+    almocoFim = parse(config.intervaloAlmocoFim, 'HH:mm', dataBase);
+  }
   
   // Gerar todos os horários em intervalos de 30 minutos
   while (isBefore(horarioAtual, horaFim)) {
@@ -48,6 +71,18 @@ export function gerarTodosHorarios(
     
     // Verificar se o término não ultrapassa o horário de fechamento
     if (isBefore(horarioTermino, horaFim) || isEqual(horarioTermino, horaFim)) {
+      // Verificar se está no intervalo de almoço
+      let estaNoAlmoco = false;
+      if (almocoInicio && almocoFim) {
+        estaNoAlmoco = (
+          (isAfter(horarioAtual, almocoInicio) || isEqual(horarioAtual, almocoInicio)) && 
+          isBefore(horarioAtual, almocoFim)
+        ) || (
+          isAfter(horarioTermino, almocoInicio) && 
+          (isBefore(horarioTermino, almocoFim) || isEqual(horarioTermino, almocoFim))
+        );
+      }
+      
       // Verificar se conflita com agendamentos ocupados
       const temConflito = agendamentosOcupados.some(agendamento => {
         const inicioOcupado = parse(agendamento.horario, 'HH:mm', dataBase);
@@ -62,7 +97,7 @@ export function gerarTodosHorarios(
       
       horarios.push({
         horario: horarioFormatado,
-        disponivel: !temConflito
+        disponivel: !temConflito && !estaNoAlmoco
       });
     }
     
@@ -78,6 +113,7 @@ export function gerarTodosHorarios(
  * 
  * @param duracaoServico - Duração do serviço em minutos (usado para calcular conflitos)
  * @param agendamentosOcupados - Array de objetos com horário e duração dos agendamentos
+ * @param config - Configurações de horário (abertura, fechamento, almoço)
  * @returns Array de horários disponíveis
  * 
  * @example
@@ -87,52 +123,11 @@ export function gerarTodosHorarios(
  */
 export function gerarHorariosDisponiveis(
   duracaoServico: number,
-  agendamentosOcupados: Array<{horario: string, duracao: number}> = []
+  agendamentosOcupados: Array<{horario: string, duracao: number}> = [],
+  config: ConfiguracaoHorario = HORARIO_FUNCIONAMENTO_PADRAO
 ): string[] {
-  const horarios: string[] = [];
-  const dataBase = new Date(2000, 0, 1);
-  
-  const horaInicio = parse(HORARIO_FUNCIONAMENTO.inicio, 'HH:mm', dataBase);
-  const horaFim = parse(HORARIO_FUNCIONAMENTO.fim, 'HH:mm', dataBase);
-  
-  let horarioAtual = horaInicio;
-  
-  // Gerar todos os horários em intervalos de 30 minutos
-  while (isBefore(horarioAtual, horaFim)) {
-    const horarioFormatado = format(horarioAtual, 'HH:mm');
-    const horarioTermino = addMinutes(horarioAtual, duracaoServico);
-    
-    // Verificar se o término não ultrapassa o horário de fechamento
-    if (isBefore(horarioTermino, horaFim) || isEqual(horarioTermino, horaFim)) {
-      // Verificar se não conflita com agendamentos ocupados
-      const temConflito = agendamentosOcupados.some(agendamento => {
-        const inicioOcupado = parse(agendamento.horario, 'HH:mm', dataBase);
-        const fimOcupado = addMinutes(inicioOcupado, agendamento.duracao);
-        
-        // Conflito se:
-        // 1. Novo agendamento começa durante um ocupado
-        // 2. Novo agendamento termina durante um ocupado  
-        // 3. Novo agendamento engloba um ocupado
-        return (
-          // Início do novo está dentro do ocupado
-          (isAfter(horarioAtual, inicioOcupado) || isEqual(horarioAtual, inicioOcupado)) && isBefore(horarioAtual, fimOcupado) ||
-          // Fim do novo está dentro do ocupado
-          isAfter(horarioTermino, inicioOcupado) && (isBefore(horarioTermino, fimOcupado) || isEqual(horarioTermino, fimOcupado)) ||
-          // Novo engloba o ocupado
-          isBefore(horarioAtual, inicioOcupado) && isAfter(horarioTermino, fimOcupado)
-        );
-      });
-      
-      if (!temConflito) {
-        horarios.push(horarioFormatado);
-      }
-    }
-    
-    // Avançar 30 minutos (intervalo fixo)
-    horarioAtual = addMinutes(horarioAtual, 30);
-  }
-  
-  return horarios;
+  const todosHorarios = gerarTodosHorarios(duracaoServico, agendamentosOcupados, config);
+  return todosHorarios.filter(h => h.disponivel).map(h => h.horario);
 }
 
 /**

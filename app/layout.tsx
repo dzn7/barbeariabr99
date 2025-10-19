@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export default function RootLayout({
+export default function RootLayout({ 
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -30,10 +30,10 @@ export default function RootLayout({
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
 
-  // Registra PWA apropriada e limpa SWs antigos
+  
   useEffect(() => {
     const initPWA = async () => {
-      // Primeiro, desregistra qualquer SW antigo
+      
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {

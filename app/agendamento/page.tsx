@@ -44,6 +44,13 @@ export default function PaginaAgendamento() {
   const [barbeariaAberta, setBarbeariaAberta] = useState(true);
   const [mensagemFechamento, setMensagemFechamento] = useState("");
   const [horariosBloqueados, setHorariosBloqueados] = useState<string[]>([]);
+  const [configuracaoHorario, setConfiguracaoHorario] = useState({
+    inicio: '09:00',
+    fim: '19:00',
+    intervaloAlmocoInicio: null as string | null,
+    intervaloAlmocoFim: null as string | null,
+    diasFuncionamento: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'] as string[]
+  });
 
   // Buscar barbeiros e serviços do Supabase
   useEffect(() => {
@@ -91,13 +98,30 @@ export default function PaginaAgendamento() {
     try {
       const { data, error } = await supabase
         .from('configuracoes_barbearia')
-        .select('aberta, mensagem_fechamento')
+        .select('*')
         .single();
 
       if (error) throw error;
       
       setBarbeariaAberta(data?.aberta ?? true);
       setMensagemFechamento(data?.mensagem_fechamento || "");
+      
+      // Atualizar configurações de horário
+      if (data) {
+        // Converter formato HH:mm:ss para HH:mm (remover segundos)
+        const formatarHorario = (horario: string | null) => {
+          if (!horario) return null;
+          return horario.substring(0, 5); // "08:00:00" -> "08:00"
+        };
+        
+        setConfiguracaoHorario({
+          inicio: formatarHorario(data.horario_abertura) || '09:00',
+          fim: formatarHorario(data.horario_fechamento) || '19:00',
+          intervaloAlmocoInicio: formatarHorario(data.intervalo_almoco_inicio),
+          intervaloAlmocoFim: formatarHorario(data.intervalo_almoco_fim),
+          diasFuncionamento: data.dias_funcionamento || ['seg', 'ter', 'qua', 'qui', 'sex', 'sab']
+        });
+      }
     } catch (error) {
       console.error('Erro ao verificar status:', error);
     }
@@ -360,15 +384,32 @@ export default function PaginaAgendamento() {
     }
   }, [dataSelecionada, barbeiroSelecionado]);
 
-  // Gera datas disponíveis (hoje + 15 dias)
-  const datasDisponiveis = gerarDatasDisponiveis();
+  // Gera datas disponíveis (hoje + 15 dias) filtrando por dias de funcionamento
+  const todasDatas = gerarDatasDisponiveis();
+  const datasDisponiveis = todasDatas.filter(data => {
+    const dataObj = parse(data.valor, 'yyyy-MM-dd', new Date());
+    const diaSemanaNum = dataObj.getDay(); // 0=dom, 1=seg, 2=ter, 3=qua, 4=qui, 5=sex, 6=sab
+    
+    const mapa = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+    const diaAbreviado = mapa[diaSemanaNum];
+    
+    return configuracaoHorario.diasFuncionamento.includes(diaAbreviado);
+  });
 
   // Gera horários disponíveis baseado na duração do serviço selecionado
   const servicoObj = servicos.find(s => s.id === servicoSelecionado);
   const duracaoServico = servicoObj?.duracao || 30; // Padrão 30 minutos
   
-  const todosHorarios = gerarTodosHorarios(duracaoServico, horariosOcupados);
+  // Passar configurações de horário do Supabase
+  console.log('⏰ Configuração de horários:', configuracaoHorario);
+  console.log('🕐 Duração do serviço:', duracaoServico, 'minutos');
+  console.log('🔴 Horários ocupados:', horariosOcupados);
+  
+  const todosHorarios = gerarTodosHorarios(duracaoServico, horariosOcupados, configuracaoHorario);
+  console.log('📋 Todos os horários gerados:', todosHorarios.length, todosHorarios);
+  
   const horariosDisponiveis = todosHorarios.filter(h => h.disponivel).map(h => h.horario);
+  console.log('✅ Horários disponíveis:', horariosDisponiveis.length, horariosDisponiveis);
 
   /**
    * Finaliza o agendamento
