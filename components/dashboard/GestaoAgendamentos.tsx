@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Clock, User, Phone, Search, Filter, CheckCircle, XCircle, Trash2, MessageCircle, Bell } from "lucide-react";
-import { WhatsAppIcon } from "@/components/WhatsAppIcon";
-import { Button, TextField, Select, Badge, Dialog, TextArea } from "@radix-ui/themes";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { supabase } from "@/lib/supabase";
-import { Modal } from "@/components/Modal";
-
-const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || 'https://barbearia-bot.fly.dev';
+import { CalendarioAgendamentos } from "./CalendarioAgendamentos";
 
 /**
  * Componente de Gestão de Agendamentos
- * Visualização e controle de todos os agendamentos
+ * Visualização em calendário estilo Google Calendar
  */
 export function GestaoAgendamentos() {
+  return <CalendarioAgendamentos />;
+}
+
+/**
+ * Componente legado mantido para referência
+ * Pode ser removido após validação
+ */
+export function GestaoAgendamentosLegado() {
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroData, setFiltroData] = useState("hoje");
