@@ -11,7 +11,9 @@ import { useAutenticacao } from "@/contexts/AutenticacaoContext";
 import { supabase } from "@/lib/supabase";
 import { ModalCalendario } from "@/components/ModalCalendario";
 import { 
-  gerarHorariosDisponiveis, 
+  gerarHorariosDisponiveis,
+  gerarTodosHorarios,
+  HorarioComStatus,
   gerarDatasDisponiveis, 
   validarDataPermitida,
   calcularHorarioTermino 
@@ -365,7 +367,8 @@ export default function PaginaAgendamento() {
   const servicoObj = servicos.find(s => s.id === servicoSelecionado);
   const duracaoServico = servicoObj?.duracao || 30; // Padrão 30 minutos
   
-  const horariosDisponiveis = gerarHorariosDisponiveis(duracaoServico, horariosOcupados);
+  const todosHorarios = gerarTodosHorarios(duracaoServico, horariosOcupados);
+  const horariosDisponiveis = todosHorarios.filter(h => h.disponivel).map(h => h.horario);
 
   /**
    * Finaliza o agendamento
@@ -803,10 +806,10 @@ export default function PaginaAgendamento() {
                         )}
                       </label>
                       
-                      {horariosDisponiveis.length === 0 ? (
+                      {todosHorarios.length === 0 ? (
                         <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800 rounded-lg border-2 border-dashed border-zinc-300 dark:border-zinc-700">
                           <p className="text-zinc-600 dark:text-zinc-400 mb-2">
-                            😔 Todos os horários estão ocupados para esta data
+                            😔 Nenhum horário disponível
                           </p>
                           <p className="text-sm text-zinc-500 dark:text-zinc-500">
                             Por favor, escolha outra data
@@ -814,22 +817,29 @@ export default function PaginaAgendamento() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                          {horariosDisponiveis.map((horario: string) => {
-                            const selecionado = horarioSelecionado === horario;
+                          {todosHorarios.map((item: HorarioComStatus) => {
+                            const selecionado = horarioSelecionado === item.horario;
+                            const ocupado = !item.disponivel;
                             
                             return (
                               <motion.button
-                                key={horario}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setHorarioSelecionado(horario)}
+                                key={item.horario}
+                                whileHover={item.disponivel ? { scale: 1.05 } : {}}
+                                whileTap={item.disponivel ? { scale: 0.95 } : {}}
+                                onClick={() => item.disponivel && setHorarioSelecionado(item.horario)}
+                                disabled={ocupado}
                                 className={`relative p-3 rounded-lg border-2 transition-all ${
-                                  selecionado
+                                  ocupado
+                                    ? "border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 cursor-not-allowed opacity-75"
+                                    : selecionado
                                     ? "border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold"
-                                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-900 dark:text-zinc-100"
+                                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-900 dark:text-zinc-100 cursor-pointer"
                                 }`}
                               >
-                                {horario}
+                                {item.horario}
+                                {ocupado && (
+                                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
+                                )}
                               </motion.button>
                             );
                           })}

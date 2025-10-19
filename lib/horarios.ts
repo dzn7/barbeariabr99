@@ -15,6 +15,64 @@ export const HORARIO_FUNCIONAMENTO = {
 };
 
 /**
+ * Tipo para horário com status
+ */
+export interface HorarioComStatus {
+  horario: string;
+  disponivel: boolean;
+}
+
+/**
+ * Gera todos os horários possíveis com status (disponível ou ocupado)
+ * 
+ * @param duracaoServico - Duração do serviço em minutos
+ * @param agendamentosOcupados - Array de objetos com horário e duração dos agendamentos
+ * @returns Array de objetos com horário e status
+ */
+export function gerarTodosHorarios(
+  duracaoServico: number,
+  agendamentosOcupados: Array<{horario: string, duracao: number}> = []
+): HorarioComStatus[] {
+  const horarios: HorarioComStatus[] = [];
+  const dataBase = new Date(2000, 0, 1);
+  
+  const horaInicio = parse(HORARIO_FUNCIONAMENTO.inicio, 'HH:mm', dataBase);
+  const horaFim = parse(HORARIO_FUNCIONAMENTO.fim, 'HH:mm', dataBase);
+  
+  let horarioAtual = horaInicio;
+  
+  // Gerar todos os horários em intervalos de 30 minutos
+  while (isBefore(horarioAtual, horaFim)) {
+    const horarioFormatado = format(horarioAtual, 'HH:mm');
+    const horarioTermino = addMinutes(horarioAtual, duracaoServico);
+    
+    // Verificar se o término não ultrapassa o horário de fechamento
+    if (isBefore(horarioTermino, horaFim) || isEqual(horarioTermino, horaFim)) {
+      // Verificar se conflita com agendamentos ocupados
+      const temConflito = agendamentosOcupados.some(agendamento => {
+        const inicioOcupado = parse(agendamento.horario, 'HH:mm', dataBase);
+        const fimOcupado = addMinutes(inicioOcupado, agendamento.duracao);
+        
+        return (
+          (isAfter(horarioAtual, inicioOcupado) || isEqual(horarioAtual, inicioOcupado)) && isBefore(horarioAtual, fimOcupado) ||
+          isAfter(horarioTermino, inicioOcupado) && (isBefore(horarioTermino, fimOcupado) || isEqual(horarioTermino, fimOcupado)) ||
+          isBefore(horarioAtual, inicioOcupado) && isAfter(horarioTermino, fimOcupado)
+        );
+      });
+      
+      horarios.push({
+        horario: horarioFormatado,
+        disponivel: !temConflito
+      });
+    }
+    
+    horarioAtual = addMinutes(horarioAtual, 30);
+  }
+  
+  return horarios;
+}
+
+/**
  * Gera todos os horários possíveis em intervalos fixos de 30 minutos
  * Bloqueia horários que conflitam com agendamentos existentes
  * 

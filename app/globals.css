@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevenir scroll horizontal */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 @layer base {
   :root {
     --background: #ffffff;
