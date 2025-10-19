@@ -629,8 +629,8 @@ export default function PaginaAgendamento() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4 overflow-x-hidden w-full">
+      <div className="container mx-auto max-w-4xl max-w-full">
         {/* Indicador de etapas */}
         <div className="mb-12">
           <div className="flex justify-between items-center">

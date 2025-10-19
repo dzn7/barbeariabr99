@@ -45,26 +45,23 @@ export async function registerPWA(type: PWAType, config: PWAConfig = {}) {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('[PWA] Nova versão instalada!');
             
-            // Notifica sobre atualização
+            // Apenas notifica, não recarrega automaticamente
             if (config.onUpdate) {
               config.onUpdate(registration);
-            } else {
-              // Comportamento padrão: recarrega a página
-              if (confirm('Nova versão disponível! Deseja atualizar agora?')) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                window.location.reload();
-              }
             }
+            // Removido: comportamento de recarregar automaticamente
           }
         });
       }
     });
 
-    // Recarrega quando o novo SW assume controle
+    // Recarrega APENAS quando usuário clicar em "Atualizar"
+    // Não recarrega automaticamente
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
+      if (!refreshing && sessionStorage.getItem('pwa-update-requested') === 'true') {
         refreshing = true;
+        sessionStorage.removeItem('pwa-update-requested');
         window.location.reload();
       }
     });

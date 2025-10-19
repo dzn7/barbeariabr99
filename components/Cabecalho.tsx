@@ -74,10 +74,10 @@ export function Cabecalho() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
-        className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg"
+        className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg overflow-x-hidden"
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-full">
+          <div className="flex h-20 items-center justify-between relative">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-4 group">
               <motion.div

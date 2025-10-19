@@ -6,12 +6,25 @@
 
 /* Prevenir scroll horizontal */
 html, body {
-  overflow-x: hidden;
+  overflow-x: hidden !important;
   max-width: 100vw;
+  width: 100%;
+  position: relative;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Garantir que nenhum elemento cause overflow */
+body > * {
+  max-width: 100vw;
+}
+
+/* Containers responsivos */
+.container {
+  max-width: 100% !important;
+  overflow-x: hidden;
 }
 
 @layer base {

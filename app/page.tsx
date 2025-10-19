@@ -121,7 +121,7 @@ export default function PaginaInicial() {
   ));
 
   return (
-    <div className="w-full bg-white dark:bg-black">
+    <div className="w-full bg-white dark:bg-black overflow-x-hidden">
       
       {/* Hero moderno e assimétrico */}
       <section className="relative bg-white dark:bg-black overflow-hidden">

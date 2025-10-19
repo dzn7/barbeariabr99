@@ -36,9 +36,11 @@ export function PWAUpdateNotification() {
 
   const handleUpdate = () => {
     if (registration && registration.waiting) {
+      // Marcar que o usuário solicitou a atualização
+      sessionStorage.setItem('pwa-update-requested', 'true');
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       setShowUpdate(false);
-      window.location.reload();
+      // O reload acontecerá via controllerchange event
     }
   };
 
