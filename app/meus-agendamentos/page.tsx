@@ -45,17 +45,25 @@ export default function PaginaMeusAgendamentos() {
     try {
       if (!usuario) return;
 
-      // Buscar cliente pelo user_id
-      const { data: cliente, error: erroCliente } = await supabase
+      // Buscar cliente pelo user_id - usando limit(1) para pegar o primeiro se houver duplicatas
+      const { data: clientes, error: erroCliente } = await supabase
         .from("clientes")
         .select("id")
         .eq("user_id", usuario.id)
-        .single();
+        .limit(1);
 
       if (erroCliente) {
         console.error("Erro ao buscar cliente:", erroCliente);
         return;
       }
+
+      if (!clientes || clientes.length === 0) {
+        console.log("Nenhum cliente encontrado para este usuário");
+        setAgendamentos([]);
+        return;
+      }
+
+      const cliente = clientes[0];
 
       // Buscar agendamentos do cliente
       const { data, error } = await supabase
