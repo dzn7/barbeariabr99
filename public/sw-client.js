@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
   }
   
   event.respondWith(
-    cacheFirst(request)
+    networkFirst(request)
   );
 });
 
@@ -89,34 +89,36 @@ self.addEventListener('fetch', (event) => {
 // ============================================
 
 /**
- * Cache First - Prioriza cache, fallback para rede
+ * Network First - Prioriza rede, fallback para cache
+ * Garante que sempre tenta buscar conteúdo atualizado
  */
-async function cacheFirst(request) {
+async function networkFirst(request) {
   try {
-    // Tenta buscar do cache primeiro
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      console.log('[SW Cliente] Servindo do cache:', request.url);
-      return cachedResponse;
-    }
-    
-    // Se não estiver em cache, busca da rede
+    // Tenta buscar da rede primeiro
     console.log('[SW Cliente] Buscando da rede:', request.url);
     const networkResponse = await fetch(request);
     
-    // Salva no cache dinâmico se for sucesso
+    // Salva no cache se for sucesso
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(
         isImageRequest(request) ? CACHE_NAMES.IMAGES : CACHE_NAMES.DYNAMIC
       );
       cache.put(request, networkResponse.clone());
+      console.log('[SW Cliente] Atualizado no cache:', request.url);
     }
     
     return networkResponse;
   } catch (error) {
-    console.error('[SW Cliente] Erro ao buscar:', error);
+    console.log('[SW Cliente] Rede falhou, tentando cache:', request.url);
     
-    // Retorna página offline se disponível
+    // Se a rede falhar, tenta buscar do cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('[SW Cliente] Servindo do cache (offline):', request.url);
+      return cachedResponse;
+    }
+    
+    // Se não tiver em cache, retorna página offline
     const offlinePage = await caches.match('/');
     if (offlinePage) {
       return offlinePage;

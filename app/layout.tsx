@@ -10,6 +10,7 @@ import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { registerPWA, unregisterPWA } from "@/lib/pwa-register";
+import { checkAndClearCache } from "@/lib/cache-buster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,6 +34,8 @@ export default function RootLayout({
   
   useEffect(() => {
     const initPWA = async () => {
+      // Primeiro: verifica e limpa cache se versão mudou
+      await checkAndClearCache();
       
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();

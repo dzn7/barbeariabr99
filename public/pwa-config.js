@@ -5,13 +5,13 @@
 
 const PWA_CONFIG = {
   // Versão da PWA - Incrementar quando houver mudanças
-  VERSION: '1.0.0',
+  VERSION: '2.0.0',
   
   // Nome dos caches
   CACHE_NAMES: {
-    STATIC: 'barbearia-br99-static-v1.0.0',
-    DYNAMIC: 'barbearia-br99-dynamic-v1.0.0',
-    IMAGES: 'barbearia-br99-images-v1.0.0',
+    STATIC: 'barbearia-br99-static-v2.0.0',
+    DYNAMIC: 'barbearia-br99-dynamic-v2.0.0',
+    IMAGES: 'barbearia-br99-images-v2.0.0',
   },
   
   // Arquivos para cache offline (cliente)

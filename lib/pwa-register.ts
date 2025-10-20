@@ -43,28 +43,34 @@ export async function registerPWA(type: PWAType, config: PWAConfig = {}) {
         
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('[PWA] Nova versão instalada!');
+            console.log('[PWA] Nova versão instalada! Ativando...');
             
-            // Apenas notifica, não recarrega automaticamente
+            // Envia mensagem para o SW pular a espera
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+            
+            // Notifica sobre atualização
             if (config.onUpdate) {
               config.onUpdate(registration);
             }
-            // Removido: comportamento de recarregar automaticamente
           }
         });
       }
     });
 
-    // Recarrega APENAS quando usuário clicar em "Atualizar"
-    // Não recarrega automaticamente
+    // Recarrega automaticamente quando o controller mudar
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing && sessionStorage.getItem('pwa-update-requested') === 'true') {
+      if (!refreshing) {
         refreshing = true;
-        sessionStorage.removeItem('pwa-update-requested');
+        console.log('[PWA] Nova versão ativa, recarregando página...');
         window.location.reload();
       }
     });
+
+    // Verifica atualizações a cada 30 segundos
+    setInterval(() => {
+      registration.update();
+    }, 30000);
 
     // Callback de sucesso
     if (config.onSuccess) {
