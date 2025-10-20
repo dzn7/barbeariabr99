@@ -427,29 +427,54 @@ export default function PaginaAgendamento() {
         horario: horarioSelecionado,
       });
 
-      // 1. Criar novo cliente (sempre cria um novo registro)
-      // Permite múltiplos clientes com mesmo telefone/nome
+      // 1. Buscar ou criar cliente
       let clienteId = null;
       
-      console.log('Criando novo cliente...');
-      
-      const { data: novoCliente, error: erroCliente } = await supabase
-        .from('clientes')
-        .insert([{
-          nome: nomeCliente,
-          email: null, // Email é opcional
-          telefone: telefoneCliente,
-          user_id: usuario?.id || null, // Conectar com usuário se autenticado
-        }])
-        .select('id')
-        .single();
+      // Se usuário está autenticado, buscar cliente existente
+      if (usuario?.id) {
+        console.log('Buscando cliente existente para usuário autenticado...');
+        
+        const { data: clienteExistente, error: erroBusca } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('user_id', usuario.id)
+          .limit(1);
 
-      if (erroCliente) {
-        console.error('Erro ao criar cliente:', erroCliente);
-        throw erroCliente;
+        if (erroBusca) {
+          console.error('Erro ao buscar cliente:', erroBusca);
+          throw erroBusca;
+        }
+
+        if (clienteExistente && clienteExistente.length > 0) {
+          clienteId = clienteExistente[0].id;
+          console.log('Cliente existente encontrado:', clienteId);
+        }
       }
-      clienteId = novoCliente.id;
-      console.log('Novo cliente criado:', clienteId);
+
+      // Se não encontrou cliente existente, criar novo
+      if (!clienteId) {
+        console.log('Criando novo cliente...');
+        
+        const { data: novoCliente, error: erroCliente } = await supabase
+          .from('clientes')
+          .insert([{
+            nome: nomeCliente,
+            email: null,
+            telefone: telefoneCliente,
+            user_id: usuario?.id || null,
+          }])
+          .select('id')
+          .single();
+
+        if (erroCliente) {
+          console.error('Erro ao criar cliente:', erroCliente);
+          console.error('Erro completo:', erroCliente);
+          throw erroCliente;
+        }
+        
+        clienteId = novoCliente.id;
+        console.log('Novo cliente criado:', clienteId);
+      }
 
       // 2. Criar data/hora combinada no timezone local (Brasil)
       // O usuário seleciona 10h → salvamos como 10h local → banco salva como 13h UTC
