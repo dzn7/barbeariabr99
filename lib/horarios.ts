@@ -24,6 +24,7 @@ export interface ConfiguracaoHorario {
   fim: string;
   intervaloAlmocoInicio?: string | null;
   intervaloAlmocoFim?: string | null;
+  intervaloHorarios?: number;
 }
 
 /**
@@ -64,7 +65,10 @@ export function gerarTodosHorarios(
     almocoFim = parse(config.intervaloAlmocoFim, 'HH:mm', dataBase);
   }
   
-  // Gerar todos os horários em intervalos de 30 minutos
+  // Intervalo entre horários (padrão 20 minutos)
+  const intervalo = config.intervaloHorarios || 20;
+  
+  // Gerar todos os horários com o intervalo configurado
   while (isBefore(horarioAtual, horaFim)) {
     const horarioFormatado = format(horarioAtual, 'HH:mm');
     const horarioTermino = addMinutes(horarioAtual, duracaoServico);
@@ -101,25 +105,25 @@ export function gerarTodosHorarios(
       });
     }
     
-    horarioAtual = addMinutes(horarioAtual, 30);
+    horarioAtual = addMinutes(horarioAtual, intervalo);
   }
   
   return horarios;
 }
 
 /**
- * Gera todos os horários possíveis em intervalos fixos de 30 minutos
+ * Gera todos os horários possíveis com intervalo configurável (15, 20 ou 30 minutos)
  * Bloqueia horários que conflitam com agendamentos existentes
  * 
  * @param duracaoServico - Duração do serviço em minutos (usado para calcular conflitos)
  * @param agendamentosOcupados - Array de objetos com horário e duração dos agendamentos
- * @param config - Configurações de horário (abertura, fechamento, almoço)
+ * @param config - Configurações de horário (abertura, fechamento, almoço, intervalo)
  * @returns Array de horários disponíveis
  * 
  * @example
- * // Alguém marcou às 09:00 um serviço de 40 minutos
- * gerarHorariosDisponiveis(30, [{horario: '09:00', duracao: 40}])
- * // Retorna: ['09:40', '10:00', '10:30', ...] (09:00 e 09:30 bloqueados)
+ * // Com intervalo de 20 minutos (padrão)
+ * gerarHorariosDisponiveis(30, [{horario: '08:00', duracao: 40}])
+ * // Retorna: ['08:40', '09:00', '09:20', ...] (08:00 e 08:20 bloqueados)
  */
 export function gerarHorariosDisponiveis(
   duracaoServico: number,

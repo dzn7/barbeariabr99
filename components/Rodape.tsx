@@ -70,11 +70,11 @@ export function Rodape() {
             <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
               <div className="flex justify-between">
                 <span>Segunda a Sexta:</span>
-                <span className="font-medium">09:00 - 20:00</span>
+                <span className="font-medium">08:00 - 19:00</span>
               </div>
               <div className="flex justify-between">
                 <span>Sábado:</span>
-                <span className="font-medium">09:00 - 18:00</span>
+                <span className="font-medium">08:00 - 19:00</span>
               </div>
               <div className="flex justify-between">
                 <span>Domingo:</span>

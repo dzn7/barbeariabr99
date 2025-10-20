@@ -21,6 +21,7 @@ interface ConfiguracaoBarbearia {
   dias_funcionamento: string[];
   intervalo_almoco_inicio: string | null;
   intervalo_almoco_fim: string | null;
+  intervalo_horarios: number;
 }
 
 interface HorarioBloqueado {
@@ -191,6 +192,7 @@ export function GestaoHorariosAvancada() {
           dias_funcionamento: config.dias_funcionamento,
           intervalo_almoco_inicio: config.intervalo_almoco_inicio,
           intervalo_almoco_fim: config.intervalo_almoco_fim,
+          intervalo_horarios: config.intervalo_horarios,
           mensagem_fechamento: config.mensagem_fechamento,
           updated_at: new Date().toISOString()
         })
@@ -482,6 +484,56 @@ export function GestaoHorariosAvancada() {
               />
               <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
                 Quando os atendimentos retornam
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Intervalo entre Horários */}
+        <div className="mt-6 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 rounded-xl p-6 border-2 border-teal-200 dark:border-teal-800">
+          <h4 className="text-lg font-semibold text-teal-900 dark:text-teal-100 mb-2 flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Intervalo entre Horários
+          </h4>
+          <p className="text-sm text-teal-700 dark:text-teal-300 mb-4">
+            Defina o espaçamento entre os horários disponíveis para agendamento
+          </p>
+          
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
+            <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+              ⏱️ Intervalo (em minutos)
+            </label>
+            <Select.Root
+              value={String(config.intervalo_horarios || 20)}
+              onValueChange={(value: string) => setConfig({ ...config, intervalo_horarios: Number(value) })}
+              size="3"
+            >
+              <Select.Trigger className="w-full" />
+              <Select.Content>
+                <Select.Item value="15">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">15 minutos</span>
+                    <span className="text-xs text-zinc-500">(Ex: 08:00, 08:15, 08:30...)</span>
+                  </div>
+                </Select.Item>
+                <Select.Item value="20">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">20 minutos</span>
+                    <span className="text-xs text-zinc-500">(Ex: 08:00, 08:20, 08:40...)</span>
+                  </div>
+                </Select.Item>
+                <Select.Item value="30">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">30 minutos</span>
+                    <span className="text-xs text-zinc-500">(Ex: 08:00, 08:30, 09:00...)</span>
+                  </div>
+                </Select.Item>
+              </Select.Content>
+            </Select.Root>
+            <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-950/30 rounded-lg border border-teal-200 dark:border-teal-800">
+              <p className="text-xs text-teal-700 dark:text-teal-300">
+                💡 <strong>Dica:</strong> Intervalos menores (15-20 min) permitem mais flexibilidade, 
+                enquanto intervalos maiores (30 min) facilitam o gerenciamento.
               </p>
             </div>
           </div>

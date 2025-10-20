@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isBefore, startOfDay } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@radix-ui/themes";
 
@@ -36,7 +36,10 @@ export function ModalCalendario({
 
   const selecionarData = (data: Date) => {
     const hoje = startOfDay(new Date());
-    if (isBefore(data, hoje)) return; // Não permitir datas passadas
+    const dataLimite = addDays(hoje, 15);
+    
+    // Não permitir datas passadas ou após 15 dias
+    if (isBefore(data, hoje) || isAfter(data, dataLimite)) return;
 
     const dataFormatada = format(data, "yyyy-MM-dd");
     onSelecionarData(dataFormatada);
@@ -46,6 +49,12 @@ export function ModalCalendario({
   const isDiaPassado = (data: Date) => {
     const hoje = startOfDay(new Date());
     return isBefore(data, hoje);
+  };
+
+  const isDiaForaDoLimite = (data: Date) => {
+    const hoje = startOfDay(new Date());
+    const dataLimite = addDays(hoje, 15);
+    return isAfter(data, dataLimite);
   };
 
   if (!aberto) return null;
@@ -118,19 +127,21 @@ export function ModalCalendario({
               const selecionado = dataSelecionada === dataFormatada;
               const hoje = isToday(dia);
               const passado = isDiaPassado(dia);
+              const foraDoLimite = isDiaForaDoLimite(dia);
+              const desabilitado = passado || foraDoLimite;
               const mesCorrente = isSameMonth(dia, mesAtual);
 
               return (
                 <motion.button
                   key={dia.toString()}
-                  whileHover={!passado ? { scale: 1.1 } : {}}
-                  whileTap={!passado ? { scale: 0.95 } : {}}
-                  onClick={() => !passado && selecionarData(dia)}
-                  disabled={passado}
+                  whileHover={!desabilitado ? { scale: 1.1 } : {}}
+                  whileTap={!desabilitado ? { scale: 0.95 } : {}}
+                  onClick={() => !desabilitado && selecionarData(dia)}
+                  disabled={desabilitado}
                   className={`
                     aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all
                     ${!mesCorrente ? "text-zinc-300 dark:text-zinc-700" : ""}
-                    ${passado ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" : ""}
+                    ${desabilitado ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" : ""}
                     ${
                       selecionado
                         ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold shadow-lg"

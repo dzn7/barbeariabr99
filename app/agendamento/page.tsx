@@ -49,7 +49,8 @@ export default function PaginaAgendamento() {
     fim: '19:00',
     intervaloAlmocoInicio: null as string | null,
     intervaloAlmocoFim: null as string | null,
-    diasFuncionamento: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'] as string[]
+    diasFuncionamento: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'] as string[],
+    intervaloHorarios: 20
   });
 
   // Buscar barbeiros e serviços do Supabase
@@ -119,7 +120,8 @@ export default function PaginaAgendamento() {
           fim: formatarHorario(data.horario_fechamento) || '19:00',
           intervaloAlmocoInicio: formatarHorario(data.intervalo_almoco_inicio),
           intervaloAlmocoFim: formatarHorario(data.intervalo_almoco_fim),
-          diasFuncionamento: data.dias_funcionamento || ['seg', 'ter', 'qua', 'qui', 'sex', 'sab']
+          diasFuncionamento: data.dias_funcionamento || ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'],
+          intervaloHorarios: data.intervalo_horarios || 20
         });
       }
     } catch (error) {
@@ -670,15 +672,15 @@ export default function PaginaAgendamento() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4 overflow-x-hidden w-full">
-      <div className="container mx-auto max-w-4xl max-w-full">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-6 sm:py-12 px-3 sm:px-4 overflow-x-hidden w-full">
+      <div className="container mx-auto max-w-4xl w-full">
         {/* Indicador de etapas */}
-        <div className="mb-12">
+        <div className="mb-6 sm:mb-12">
           <div className="flex justify-between items-center">
             {[1, 2, 3, 4].map((numero) => (
               <div key={numero} className="flex items-center flex-1">
                 <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${
+                  className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 transition-all text-sm sm:text-base ${
                     etapa >= numero
                       ? "bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-white dark:text-zinc-900"
                       : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-600"
@@ -688,7 +690,7 @@ export default function PaginaAgendamento() {
                 </div>
                 {numero < 4 && (
                   <div
-                    className={`flex-1 h-1 mx-2 transition-all ${
+                    className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 transition-all ${
                       etapa > numero
                         ? "bg-zinc-900 dark:bg-zinc-100"
                         : "bg-zinc-300 dark:bg-zinc-700"
@@ -723,15 +725,15 @@ export default function PaginaAgendamento() {
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <Card className="p-4 sm:p-6 md:p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
             {/* Etapa 1: Selecionar Barbeiro e Serviço */}
             {etapa === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
                     Escolha o Barbeiro e o Serviço
                   </h2>
-                  <p className="text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
                     Selecione o profissional e o serviço desejado
                   </p>
                 </div>
@@ -803,10 +805,10 @@ export default function PaginaAgendamento() {
             {etapa === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
                     Escolha a Data e o Horário
                   </h2>
-                  <p className="text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
                     Selecione o melhor dia e horário para você
                   </p>
                 </div>
@@ -857,7 +859,7 @@ export default function PaginaAgendamento() {
                           </p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
                           {todosHorarios.map((item: HorarioComStatus) => {
                             const selecionado = horarioSelecionado === item.horario;
                             const ocupado = !item.disponivel;
@@ -869,7 +871,7 @@ export default function PaginaAgendamento() {
                                 whileTap={item.disponivel ? { scale: 0.95 } : {}}
                                 onClick={() => item.disponivel && setHorarioSelecionado(item.horario)}
                                 disabled={ocupado}
-                                className={`relative p-3 rounded-lg border-2 transition-all ${
+                                className={`relative p-2.5 sm:p-3 rounded-lg border-2 transition-all text-sm sm:text-base font-medium ${
                                   ocupado
                                     ? "border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 cursor-not-allowed opacity-75"
                                     : selecionado
@@ -879,7 +881,7 @@ export default function PaginaAgendamento() {
                               >
                                 {item.horario}
                                 {ocupado && (
-                                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
+                                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
                                 )}
                               </motion.button>
                             );
@@ -1041,13 +1043,13 @@ export default function PaginaAgendamento() {
             )}
 
             {/* Botões de navegação */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-zinc-200 dark:border-zinc-800">
               <Button
                 size="3"
                 variant="outline"
+                className="w-full sm:w-auto px-6 cursor-pointer"
                 onClick={etapaAnterior}
                 disabled={etapa === 1}
-                className="px-6 cursor-pointer"
               >
                 Voltar
               </Button>
@@ -1057,7 +1059,7 @@ export default function PaginaAgendamento() {
                   size="3"
                   onClick={avancarEtapa}
                   disabled={!etapaCompleta()}
-                  className="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 px-6 cursor-pointer"
+                  className="w-full sm:w-auto bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 px-6 cursor-pointer"
                 >
                   Próximo
                 </Button>
@@ -1065,9 +1067,10 @@ export default function PaginaAgendamento() {
                 <Button
                   size="3"
                   onClick={finalizarAgendamento}
-                  className="bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600 px-6 cursor-pointer"
+                  disabled={carregando}
+                  className="w-full sm:w-auto bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600 px-4 sm:px-6 cursor-pointer text-sm sm:text-base"
                 >
-                  Confirmar Agendamento
+                  {carregando ? "Confirmando..." : "Confirmar Agendamento"}
                 </Button>
               )}
             </div>
