@@ -245,7 +245,7 @@ export default function PaginaConfiguracoes() {
                         </label>
                         <TextField.Root
                           type="tel"
-                          placeholder="(86) 99953-3738"
+                          placeholder="(86) 99415-6652"
                           value={novoBarbeiro.telefone}
                           onChange={(e) => setNovoBarbeiro({ ...novoBarbeiro, telefone: e.target.value })}
                           size="3"

@@ -179,11 +179,11 @@ export default function PaginaInicial() {
                 </Link>
                 
                 <a
-                  href="tel:+558699533738"
+                  href="tel:+558694156652"
                   className="inline-flex items-center justify-center px-8 py-4 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white rounded-xl font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all hover:scale-105"
                 >
                   <Phone className="w-5 h-5 mr-2" />
-                  (86) 99953-3738
+                  (86) 99415-6652
                 </a>
               </motion.div>
 
@@ -407,7 +407,7 @@ export default function PaginaInicial() {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-6 h-6" />
-                <span className="text-lg">(86) 99953-3738</span>
+                <span className="text-lg">(86) 99953-</span>
               </div>
             </div>
 

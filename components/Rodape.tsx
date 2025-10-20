@@ -35,12 +35,12 @@ export function Rodape() {
             </h3>
             <div className="space-y-3">
               <motion.a
-                href="tel:+5511999999999"
+                href="tel:+558694156652"
                 whileHover={{ x: 5 }}
                 className="flex items-center space-x-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
               >
                 <Phone className="h-4 w-4" />
-                <span>(86) 99953-3738</span>
+                <span>(86) 99415-6652</span>
               </motion.a>
               
               <motion.a

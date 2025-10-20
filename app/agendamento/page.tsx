@@ -951,7 +951,7 @@ export default function PaginaAgendamento() {
                     <div className={`relative ${erroTelefone ? 'animate-pulse' : ''}`}>
                       <TextField.Root
                         type="tel"
-                        placeholder="(86) 99953-3738"
+                        placeholder="(86) 99415-6652"
                         value={telefoneCliente}
                         onChange={(e) => {
                           setTelefoneCliente(e.target.value);

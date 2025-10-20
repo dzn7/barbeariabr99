@@ -32,7 +32,7 @@ export function Cabecalho() {
   };
 
   const informacoesContato = [
-    { icon: Phone, texto: "(86) 99953-3738", href: "tel:+5511999999999" },
+    { icon: Phone, texto: "(86) 99415-6652", href: "tel:+5511999999999" },
     { icon: Clock, texto: "Seg-Sáb: 9h-18h", href: null },
     { icon: MapPin, texto: "Barras, PI", href: null },
   ];
