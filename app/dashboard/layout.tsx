@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { DashboardNotificationWrapper } from "@/components/DashboardNotificationWrapper";
 
 export const metadata: Metadata = {
   title: "Dashboard - Barbearia BR99",
@@ -11,9 +10,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <DashboardNotificationWrapper>
-      {children}
-    </DashboardNotificationWrapper>
-  );
+  return <>{children}</>;
 }

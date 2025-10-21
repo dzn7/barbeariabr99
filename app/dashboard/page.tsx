@@ -19,6 +19,8 @@ import { RemarcacaoAgendamento } from "@/components/dashboard/RemarcacaoAgendame
 import { GestaoHorarios } from "@/components/dashboard/GestaoHorarios";
 import { GestaoHorariosAvancada } from "@/components/dashboard/GestaoHorariosAvancada";
 import { AlternadorTema } from "@/components/AlternadorTema";
+import { NotificationPermission } from "@/components/NotificationPermission";
+import { useAgendamentosRealtime } from "@/hooks/useAgendamentosRealtime";
 import { supabase } from "@/lib/supabase";
 import { startOfMonth, endOfMonth } from "date-fns";
 
@@ -42,6 +44,21 @@ export default function DashboardCompleto() {
   });
   const [carregando, setCarregando] = useState(true);
   const [autenticado, setAutenticado] = useState(false);
+
+  // Hook de notificações em tempo real
+  useAgendamentosRealtime({
+    enabled: autenticado,
+    onNewAgendamento: (agendamento) => {
+      console.log("[Dashboard] 🎉 Novo agendamento:", agendamento);
+      // Recarregar métricas
+      buscarMetricas();
+    },
+    onCancelamento: (agendamento) => {
+      console.log("[Dashboard] ❌ Cancelamento:", agendamento);
+      // Recarregar métricas
+      buscarMetricas();
+    },
+  });
 
   // Verificar autenticação ao carregar
   useEffect(() => {
@@ -212,6 +229,9 @@ export default function DashboardCompleto() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black overflow-x-hidden">
+      {/* Componente de Notificações Push */}
+      <NotificationPermission />
+      
       {/* Navbar Exclusiva do Dashboard */}
       <header className="bg-black border-b border-zinc-800 sticky top-0 z-50 w-full">
         <div className="container mx-auto px-4 max-w-full">
