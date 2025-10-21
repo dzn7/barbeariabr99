@@ -132,6 +132,38 @@ async function networkFirst(request) {
 }
 
 // ============================================
+// NOTIFICAÇÕES PUSH
+// ============================================
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW Dashboard] Notificação clicada:', event.notification.tag);
+  
+  event.notification.close();
+  
+  // Abrir ou focar na janela do dashboard
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Se já tem uma janela aberta, focar nela
+        for (const client of clientList) {
+          if (client.url.includes('/dashboard') && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        
+        // Se não tem janela aberta, abrir nova
+        const url = event.notification.data?.url || '/dashboard/agendamentos';
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+  );
+});
+
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW Dashboard] Notificação fechada:', event.notification.tag);
+});
+
+// ============================================
 // MENSAGENS - Comunicação com a aplicação
 // ============================================
 self.addEventListener('message', (event) => {
@@ -151,6 +183,22 @@ self.addEventListener('message', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => caches.delete(cacheName))
         );
+      })
+    );
+  }
+  
+  // Enviar notificação via mensagem
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    console.log('[SW Dashboard] Enviando notificação:', event.data.payload);
+    event.waitUntil(
+      self.registration.showNotification(event.data.payload.title, {
+        body: event.data.payload.body,
+        icon: event.data.payload.icon || '/favicon/android-chrome-192x192.png',
+        badge: event.data.payload.badge || '/favicon/android-chrome-192x192.png',
+        tag: event.data.payload.tag || 'default',
+        requireInteraction: event.data.payload.requireInteraction || false,
+        data: event.data.payload.data,
+        vibrate: [200, 100, 200],
       })
     );
   }
