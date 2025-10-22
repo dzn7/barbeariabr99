@@ -233,23 +233,33 @@ export default function DashboardCompleto() {
       <NotificationPermission />
       
       {/* Navbar Exclusiva do Dashboard */}
-      <header className="bg-black border-b border-zinc-800 sticky top-0 z-50 w-full">
+      <header className="bg-white dark:bg-[#1a1a1a] border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-50 w-full">
         <div className="container mx-auto px-4 max-w-full">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-4">
               <div className="relative w-36 h-12 md:w-44 md:h-14 flex items-center">
+                {/* Logo para modo escuro - logo escuro */}
                 <Image
-                  src="/assets/logo.PNG"
+                  src="/assets/logodark.webp"
                   alt="Barbearia BR99"
                   fill
                   sizes="(max-width: 768px) 144px, 176px"
-                  className="object-contain object-left"
+                  className="object-contain object-left dark:block hidden"
+                  priority
+                />
+                {/* Logo para modo claro - logo branco */}
+                <Image
+                  src="/assets/logowhite.webp"
+                  alt="Barbearia BR99"
+                  fill
+                  sizes="(max-width: 768px) 144px, 176px"
+                  className="object-contain object-left dark:hidden block"
                   priority
                 />
               </div>
-              <div className="hidden sm:flex items-center border-l border-zinc-700 pl-4 h-10">
-                <p className="text-sm text-zinc-400 font-medium whitespace-nowrap">
+              <div className="hidden sm:flex items-center border-l border-zinc-300 dark:border-zinc-700 pl-4 h-10">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">
                   Dashboard Administrativo
                 </p>
               </div>
@@ -260,7 +270,7 @@ export default function DashboardCompleto() {
               <AlternadorTema />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-zinc-100 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors text-sm font-medium"
               >
                 <LogOut className="w-4 h-4" />
                 Sair

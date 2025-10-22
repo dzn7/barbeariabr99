@@ -193,8 +193,8 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       self.registration.showNotification(event.data.payload.title, {
         body: event.data.payload.body,
-        icon: event.data.payload.icon || '/favicon/android-chrome-192x192.png',
-        badge: event.data.payload.badge || '/favicon/android-chrome-192x192.png',
+        icon: event.data.payload.icon || '/favicon-dashboard/android-chrome-192x192.png',
+        badge: event.data.payload.badge || '/favicon-dashboard/android-chrome-192x192.png',
         tag: event.data.payload.tag || 'default',
         requireInteraction: event.data.payload.requireInteraction || false,
         data: event.data.payload.data,

@@ -76,8 +76,8 @@ export async function showLocalNotification(payload: NotificationPayload): Promi
   try {
     const notification = new Notification(payload.title, {
       body: payload.body,
-      icon: payload.icon || '/favicon/android-chrome-192x192.png',
-      badge: payload.badge || '/favicon/android-chrome-192x192.png',
+      icon: payload.icon || '/favicon-dashboard/android-chrome-192x192.png',
+      badge: payload.badge || '/favicon-dashboard/android-chrome-192x192.png',
       tag: payload.tag || 'default',
       requireInteraction: payload.requireInteraction || false,
       data: payload.data,
@@ -127,12 +127,11 @@ export async function showServiceWorkerNotification(
     
     await registration.showNotification(payload.title, {
       body: payload.body,
-      icon: payload.icon || '/favicon/android-chrome-192x192.png',
-      badge: payload.badge || '/favicon/android-chrome-192x192.png',
+      icon: payload.icon || '/favicon-dashboard/android-chrome-192x192.png',
+      badge: payload.badge || '/favicon-dashboard/android-chrome-192x192.png',
       tag: payload.tag || 'default',
       requireInteraction: payload.requireInteraction || false,
       data: payload.data,
-      vibrate: [200, 100, 200], // Padrão de vibração
       actions: payload.data?.actions || [],
     });
 
@@ -168,8 +167,8 @@ export async function notifyNewAgendamento(agendamento: {
   await showServiceWorkerNotification({
     title: '🎉 Novo Agendamento!',
     body: `${agendamento.cliente_nome} - ${agendamento.servico_nome}\n${dataFormatada} às ${horaFormatada}`,
-    icon: '/favicon/android-chrome-192x192.png',
-    badge: '/favicon/android-chrome-192x192.png',
+    icon: '/favicon-dashboard/android-chrome-192x192.png',
+    badge: '/favicon-dashboard/android-chrome-192x192.png',
     tag: `agendamento-${agendamento.id}`,
     requireInteraction: true,
     data: {
@@ -201,7 +200,7 @@ export async function notifyCancelamento(agendamento: {
   await showServiceWorkerNotification({
     title: '❌ Agendamento Cancelado',
     body: `${agendamento.cliente_nome}\n${dataFormatada} às ${horaFormatada}`,
-    icon: '/favicon/android-chrome-192x192.png',
+    icon: '/favicon-dashboard/android-chrome-192x192.png',
     tag: `cancelamento-${agendamento.id}`,
     requireInteraction: false,
     data: {
@@ -219,7 +218,7 @@ export async function testNotification(): Promise<void> {
   await showServiceWorkerNotification({
     title: '✅ Notificações Ativadas!',
     body: 'Você receberá alertas de novos agendamentos aqui.',
-    icon: '/favicon/android-chrome-192x192.png',
+    icon: '/favicon-dashboard/android-chrome-192x192.png',
     requireInteraction: false,
     data: {
       type: 'test',

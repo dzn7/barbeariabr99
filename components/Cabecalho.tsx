@@ -40,7 +40,7 @@ export function Cabecalho() {
   return (
     <>
       {/* Barra superior com informações */}
-      <div className="hidden lg:block bg-zinc-900 dark:bg-zinc-950 text-white py-2">
+      <div className="hidden lg:block bg-zinc-900 dark:bg-[#1a1a1a] text-white py-2">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-6">
@@ -74,7 +74,7 @@ export function Cabecalho() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
-        className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg overflow-x-hidden"
+        className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-lg overflow-x-hidden"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-full">
           <div className="flex h-20 items-center justify-between relative">
@@ -86,12 +86,22 @@ export function Cabecalho() {
                 className="relative"
               >
                 <div className="relative w-48 h-16 md:w-52 md:h-20">
+                  {/* Logo para modo escuro */}
                   <Image
-                    src="/assets/logo.PNG"
+                    src="/assets/logodark.webp"
                     alt="Logo Barbearia BR99"
                     fill
                     sizes="(max-width: 768px) 192px, 208px"
-                    className="object-contain object-left"
+                    className="object-contain object-left dark:block hidden"
+                    priority
+                  />
+                  {/* Logo para modo claro */}
+                  <Image
+                    src="/assets/logowhite.webp"
+                    alt="Logo Barbearia BR99"
+                    fill
+                    sizes="(max-width: 768px) 192px, 208px"
+                    className="object-contain object-left dark:hidden block"
                     priority
                   />
                 </div>
