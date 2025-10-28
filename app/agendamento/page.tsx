@@ -104,6 +104,8 @@ export default function PaginaAgendamento() {
 
       if (error) throw error;
       
+      // Barbearia sempre aberta, exceto se fechada MANUALMENTE
+      // Não fechar automaticamente baseado em horário de funcionamento
       setBarbeariaAberta(data?.aberta ?? true);
       setMensagemFechamento(data?.mensagem_fechamento || "");
       
