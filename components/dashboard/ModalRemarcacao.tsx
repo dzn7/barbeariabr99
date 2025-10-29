@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@radix-ui/themes";
 import { format, addDays, setHours, setMinutes, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { gerarTodosHorarios } from "@/lib/horarios";
 
 const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || 'https://barbearia-bot.fly.dev';
 
@@ -69,13 +70,6 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
   const buscarHorariosDisponiveis = async () => {
     setCarregando(true);
     try {
-      // Horários de funcionamento: 9h às 18h
-      const horariosBase = [
-        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
-      ];
-
       // Buscar agendamentos do barbeiro nesta data
       const inicioDia = new Date(dataSelecionada);
       inicioDia.setHours(0, 0, 0, 0);
@@ -91,16 +85,14 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
         fimDia: fimDia.toISOString(),
       });
 
-      // Buscar agendamentos com todos os dados necessários
-      const { data: agendamentosBasicos, error: erroAgendamentos } = await supabase
+      // Buscar agendamentos do barbeiro nesta data
+      const { data: agendamentosData, error: erroAgendamentos } = await supabase
         .from("agendamentos")
         .select(`
           id,
           data_hora,
           status,
-          cliente_id,
-          servico_id,
-          barbeiro_id
+          servicos (nome, duracao)
         `)
         .eq("barbeiro_id", agendamento.barbeiros.id)
         .gte("data_hora", inicioDia.toISOString())
@@ -109,84 +101,47 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
 
       if (erroAgendamentos) {
         console.error("❌ Erro ao buscar agendamentos:", erroAgendamentos);
-        console.error("❌ Código:", erroAgendamentos.code);
-        console.error("❌ Mensagem:", erroAgendamentos.message);
-        console.error("❌ Detalhes:", erroAgendamentos.details);
-        console.error("❌ Hint:", erroAgendamentos.hint);
-        // Retornar todos como disponíveis em caso de erro
-        setHorariosDisponiveis(horariosBase.map(hora => ({
-          hora,
-          disponivel: true,
-          agendamento: undefined
-        })));
         setCarregando(false);
         return;
       }
 
-      console.log("✅ Agendamentos básicos encontrados:", agendamentosBasicos?.length || 0);
+      console.log("✅ Agendamentos encontrados:", agendamentosData?.length || 0);
 
-      // Buscar detalhes dos clientes e serviços
-      const agendamentosExistentes = await Promise.all(
-        (agendamentosBasicos || []).map(async (ag) => {
-          const [clienteRes, servicoRes] = await Promise.all([
-            supabase.from("clientes").select("nome").eq("id", ag.cliente_id).single(),
-            supabase.from("servicos").select("nome, duracao").eq("id", ag.servico_id).single()
-          ]);
+      // Converter agendamentos para formato {horario, duracao}
+      const horariosOcupados = (agendamentosData || [])
+        .filter((ag: any) => ag.id !== agendamento.id) // Excluir o agendamento atual
+        .map((ag: any) => ({
+          horario: format(parseISO(ag.data_hora), "HH:mm"),
+          duracao: ag.servicos?.duracao || 30
+        }));
 
-          return {
-            ...ag,
-            clientes: clienteRes.data,
-            servicos: servicoRes.data
-          };
-        })
-      );
+      console.log("🔴 Horários ocupados:", horariosOcupados);
 
-      console.log("✅ Agendamentos encontrados:", agendamentosExistentes?.length || 0);
-      console.log("📋 Detalhes dos agendamentos:", agendamentosExistentes);
+      // Gerar todos os horários com intervalo de 20 minutos
+      const duracaoServico = agendamento.servicos.duracao;
+      const todosHorarios = gerarTodosHorarios(duracaoServico, horariosOcupados, {
+        inicio: "08:00",
+        fim: "18:00",
+        intervaloHorarios: 20 // 20 minutos
+      });
 
-      // Mapear horários com disponibilidade
-      const horarios: HorarioDisponivel[] = horariosBase.map((hora) => {
-        const [h, m] = hora.split(":").map(Number);
+      console.log("📋 Total de horários gerados:", todosHorarios.length);
 
-        // Verificar se há agendamento neste horário
-        const agendamentoExistente = agendamentosExistentes?.find((ag: any) => {
-          const dataAgendamento = parseISO(ag.data_hora);
-          const horaAgendamento = dataAgendamento.getHours();
-          const minutoAgendamento = dataAgendamento.getMinutes();
-          
-          const match = horaAgendamento === h && minutoAgendamento === m && ag.id !== agendamento.id;
-          
-          if (match) {
-            console.log(`🔴 Horário ${hora} OCUPADO:`, {
-              agendamento_id: ag.id,
-              cliente: ag.clientes?.nome,
-              servico: ag.servicos?.nome,
-              data_hora: ag.data_hora,
-            });
-          }
-          
-          return match;
-        });
-
+      // Converter para formato do componente
+      const horarios: HorarioDisponivel[] = todosHorarios.map((h) => {
+        const ocupado = horariosOcupados.find((ho: any) => ho.horario === h.horario);
+        
         return {
-          hora,
-          disponivel: !agendamentoExistente,
-          agendamento: agendamentoExistente
-            ? {
-                cliente: agendamentoExistente.clientes?.nome || "Cliente",
-                servico: agendamentoExistente.servicos?.nome || "Serviço",
-              }
-            : undefined,
+          hora: h.horario,
+          disponivel: h.disponivel,
+          agendamento: ocupado ? {
+            cliente: "Ocupado",
+            servico: "Agendamento existente"
+          } : undefined
         };
       });
 
-      console.log("📊 Resumo dos horários:");
-      horarios.forEach(h => {
-        if (!h.disponivel) {
-          console.log(`  ❌ ${h.hora} - Ocupado por ${h.agendamento?.cliente}`);
-        }
-      });
-
+      console.log("✅ Horários disponíveis:", horarios.filter(h => h.disponivel).length);
       setHorariosDisponiveis(horarios);
     } catch (error) {
       console.error("Erro ao buscar horários:", error);
@@ -337,16 +292,23 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
 
               {/* Seleção de Horário */}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Selecione o Horário
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Selecione o Horário (intervalo de 20min)
+                  </h3>
+                  {!carregando && (
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {horariosDisponiveis.filter(h => h.disponivel).length} disponíveis
+                    </span>
+                  )}
+                </div>
                 {carregando ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-white"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
                     {horariosDisponiveis.map((horario) => {
                       const ehSelecionado = horarioSelecionado === horario.hora;
 
@@ -359,30 +321,38 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
                             }
                           }}
                           disabled={!horario.disponivel}
-                          className={`p-3 rounded-lg text-left transition-all relative ${
+                          className={`p-2.5 rounded-lg text-center transition-all relative ${
                             !horario.disponivel
-                              ? "bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 cursor-not-allowed"
+                              ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 cursor-not-allowed opacity-60"
                               : ehSelecionado
-                              ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg"
-                              : "bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                              ? "bg-green-600 dark:bg-green-500 text-white shadow-lg scale-105"
+                              : "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-green-500 dark:hover:border-green-400 hover:shadow-md"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold">{horario.hora}</span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`font-bold text-sm ${
+                              ehSelecionado 
+                                ? "text-white" 
+                                : horario.disponivel 
+                                ? "text-zinc-900 dark:text-white" 
+                                : "text-red-600 dark:text-red-400"
+                            }`}>
+                              {horario.hora}
+                            </span>
                             {horario.disponivel ? (
-                              <Check className="w-4 h-4 text-green-600" />
+                              <Check className={`w-3 h-3 ${ehSelecionado ? "text-white" : "text-green-600 dark:text-green-400"}`} />
                             ) : (
-                              <X className="w-4 h-4 text-red-600" />
+                              <X className="w-3 h-3 text-red-600 dark:text-red-400" />
                             )}
                           </div>
-                          {!horario.disponivel && horario.agendamento && (
-                            <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                              {horario.agendamento.cliente}
-                            </div>
-                          )}
                         </button>
                       );
                     })}
+                  </div>
+                )}
+                {!carregando && horariosDisponiveis.length === 0 && (
+                  <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
+                    Nenhum horário disponível para esta data
                   </div>
                 )}
               </div>
