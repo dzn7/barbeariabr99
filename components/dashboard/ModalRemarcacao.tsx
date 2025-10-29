@@ -197,11 +197,24 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
       const dataFormatada = format(novaDataHora, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
       const mensagem = `🔄 *Agendamento Remarcado*\n\nOlá ${agendamento.clientes.nome}!\n\nSeu agendamento foi remarcado:\n\n📅 *Nova Data:* ${dataFormatada}\n✂️ *Serviço:* ${agendamento.servicos.nome}\n👤 *Barbeiro:* ${agendamento.barbeiros.nome}\n💰 *Valor:* R$ ${agendamento.servicos.preco.toFixed(2)}\n\n${motivo ? `📝 *Motivo:* ${motivo}\n\n` : ""}Qualquer dúvida, entre em contato!\n\n_Barbearia BR99_`;
 
+      // Limpar e formatar número
+      let telefone = agendamento.clientes.telefone.replace(/\D/g, '');
+      
+      // Adicionar código do país se não tiver
+      if (!telefone.startsWith('55')) {
+        telefone = '55' + telefone;
+      }
+      
+      // Remover o 9 extra se tiver 13 dígitos (formato antigo)
+      if (telefone.length === 13 && telefone.charAt(4) === '9') {
+        telefone = telefone.substring(0, 4) + telefone.substring(5);
+      }
+
       await fetch(`${BOT_URL}/api/mensagens/enviar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          numero: agendamento.clientes.telefone,
+          numero: telefone,
           mensagem,
         }),
       });
