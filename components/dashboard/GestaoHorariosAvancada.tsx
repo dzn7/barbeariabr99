@@ -143,10 +143,25 @@ export function GestaoHorariosAvancada() {
   const alternarStatus = async () => {
     if (!config) return;
     
+    const novoStatus = !config.aberta;
+    
+    // Se está tentando FECHAR, pedir confirmação dupla
+    if (!novoStatus) {
+      const confirmacao1 = confirm(
+        "⚠️ ATENÇÃO!\n\nDeseja realmente FECHAR a barbearia?\n\nClientes não poderão fazer novos agendamentos."
+      );
+      
+      if (!confirmacao1) return;
+      
+      const confirmacao2 = confirm(
+        "🔒 CONFIRMAÇÃO FINAL\n\nTem certeza? Esta ação fechará a barbearia para agendamentos.\n\nClique OK para confirmar ou Cancelar para manter aberta."
+      );
+      
+      if (!confirmacao2) return;
+    }
+    
     setSalvando(true);
     try {
-      const novoStatus = !config.aberta;
-      
       const { error } = await supabase
         .from('configuracoes_barbearia')
         .update({ 
@@ -158,10 +173,10 @@ export function GestaoHorariosAvancada() {
       if (error) throw error;
 
       setModalConfig({
-        title: novoStatus ? "Barbearia Aberta" : "Barbearia Fechada",
+        title: novoStatus ? "✅ Barbearia Aberta" : "🔒 Barbearia Fechada",
         message: novoStatus 
-          ? "A barbearia está aberta para agendamentos"
-          : "A barbearia foi fechada. Clientes não poderão agendar.",
+          ? "A barbearia está aberta para agendamentos. Clientes podem agendar normalmente."
+          : "A barbearia foi fechada. Clientes não poderão agendar novos horários.",
         type: "success"
       });
       setModalAberto(true);
@@ -169,7 +184,7 @@ export function GestaoHorariosAvancada() {
       setConfig({ ...config, aberta: novoStatus });
     } catch (error: any) {
       setModalConfig({
-        title: "Erro",
+        title: "❌ Erro",
         message: `Erro ao alterar status: ${error.message}`,
         type: "error"
       });
