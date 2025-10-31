@@ -610,37 +610,39 @@ export function GestaoAgendamentosLegado() {
       </div>
 
       {/* Barra de Seleção Múltipla */}
-      <div className="flex items-center justify-between gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg">
         <button
           onClick={() => {
             setModoSelecao(!modoSelecao);
             setAgendamentosSelecionados([]);
           }}
-          className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium"
+          className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium w-full sm:w-auto"
         >
           {modoSelecao ? 'Cancelar Seleção' : 'Selecionar Múltiplos'}
         </button>
 
         {modoSelecao && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400 text-center sm:text-left">
               {agendamentosSelecionados.length} selecionado(s)
             </span>
-            <button
-              onClick={() => selecionarTodos(agendamentosFiltrados)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {agendamentosSelecionados.length === agendamentosFiltrados.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
-            </button>
-            {agendamentosSelecionados.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
-                onClick={deletarSelecionados}
-                className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2"
+                onClick={() => selecionarTodos(agendamentosFiltrados)}
+                className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors w-full sm:w-auto"
               >
-                <Trash2 className="w-4 h-4" />
-                Deletar Selecionados
+                {agendamentosSelecionados.length === agendamentosFiltrados.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
               </button>
-            )}
+              {agendamentosSelecionados.length > 0 && (
+                <button
+                  onClick={deletarSelecionados}
+                  className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Deletar Selecionados
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

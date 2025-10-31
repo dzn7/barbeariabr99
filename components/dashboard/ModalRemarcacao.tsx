@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, Clock, User, AlertCircle, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@radix-ui/themes";
-import { format, addDays, setHours, setMinutes, parseISO, isSameDay } from "date-fns";
+import { format, addDays, setHours, setMinutes, parseISO, isSameDay, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { gerarTodosHorarios } from "@/lib/horarios";
 
@@ -67,6 +67,21 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
     }
   }, [dataSelecionada, aberto]);
 
+  // Bloquear scroll do body quando modal está aberto
+  useEffect(() => {
+    if (aberto) {
+      // Salvar o estado atual do overflow
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      // Bloquear scroll
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restaurar o overflow original quando fechar
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [aberto]);
+
   const buscarHorariosDisponiveis = async () => {
     setCarregando(true);
     try {
@@ -107,13 +122,57 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
 
       console.log("✅ Agendamentos encontrados:", agendamentosData?.length || 0);
 
+      // Buscar horários bloqueados
+      const dataFormatada = format(dataSelecionada, "yyyy-MM-dd");
+      const { data: bloqueiosData, error: erroBloqueios } = await supabase
+        .from("horarios_bloqueados")
+        .select("*")
+        .eq("data", dataFormatada)
+        .or(`barbeiro_id.is.null,barbeiro_id.eq.${agendamento.barbeiros.id}`);
+
+      if (erroBloqueios) {
+        console.error("❌ Erro ao buscar bloqueios:", erroBloqueios);
+      }
+
+      console.log("🔒 Bloqueios encontrados:", bloqueiosData?.length || 0);
+
       // Converter agendamentos para formato {horario, duracao}
-      const horariosOcupados = (agendamentosData || [])
+      const horariosOcupadosAgendamentos = (agendamentosData || [])
         .filter((ag: any) => ag.id !== agendamento.id) // Excluir o agendamento atual
         .map((ag: any) => ({
           horario: format(parseISO(ag.data_hora), "HH:mm"),
           duracao: ag.servicos?.duracao || 30
         }));
+
+      // Converter bloqueios para formato {horario, duracao}
+      const horariosOcupadosBloqueios: Array<{horario: string, duracao: number}> = [];
+      if (bloqueiosData) {
+        bloqueiosData.forEach((bloqueio: any) => {
+          const horaInicioStr = bloqueio.horario_inicio.substring(0, 5);
+          const horaFimStr = bloqueio.horario_fim.substring(0, 5);
+          
+          const dataBase = new Date(2000, 0, 1);
+          const inicioBloqueio = parse(horaInicioStr, 'HH:mm', dataBase);
+          const fimBloqueio = parse(horaFimStr, 'HH:mm', dataBase);
+          
+          let horarioAtual = inicioBloqueio;
+          while (horarioAtual < fimBloqueio) {
+            const horarioFormatado = format(horarioAtual, 'HH:mm');
+            const tempoRestante = Math.ceil((fimBloqueio.getTime() - horarioAtual.getTime()) / 60000);
+            const duracaoBloqueio = Math.min(20, tempoRestante);
+            
+            horariosOcupadosBloqueios.push({
+              horario: horarioFormatado,
+              duracao: duracaoBloqueio
+            });
+            
+            horarioAtual = new Date(horarioAtual.getTime() + 20 * 60000);
+          }
+        });
+      }
+
+      // Combinar agendamentos e bloqueios
+      const horariosOcupados = [...horariosOcupadosAgendamentos, ...horariosOcupadosBloqueios];
 
       console.log("🔴 Horários ocupados:", horariosOcupados);
 
@@ -227,41 +286,53 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={(e) => {
+          // Fechar ao clicar no overlay
+          if (e.target === e.currentTarget) {
+            onFechar();
+          }
+        }}
+      >
+        {/* Overlay com backdrop */}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+          className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800">
-            <div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          {/* Header - fixo */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
                 Remarcar Agendamento
               </h2>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
                 {agendamento.clientes.nome} • {agendamento.servicos.nome}
               </p>
             </div>
             <button
               onClick={onFechar}
-              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors self-end sm:self-auto"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-            <div className="grid md:grid-cols-2 gap-6">
+          {/* Content - scrollável */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Seleção de Data */}
               <div>
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Selecione a Data
                 </h3>
-                <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                   {proximosDias.map((dia) => {
                     const ehHoje = isSameDay(dia, new Date());
                     const ehSelecionado = isSameDay(dia, dataSelecionada);
@@ -305,13 +376,14 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
 
               {/* Seleção de Horário */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Selecione o Horário (intervalo de 20min)
+                    <span className="hidden sm:inline">Selecione o Horário (intervalo de 20min)</span>
+                    <span className="sm:hidden">Selecione o Horário</span>
                   </h3>
                   {!carregando && (
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                       {horariosDisponiveis.filter(h => h.disponivel).length} disponíveis
                     </span>
                   )}
@@ -321,7 +393,7 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-white"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
                     {horariosDisponiveis.map((horario) => {
                       const ehSelecionado = horarioSelecionado === horario.hora;
 
@@ -396,15 +468,15 @@ export function ModalRemarcacao({ agendamento, aberto, onFechar, onSucesso }: Mo
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-zinc-200 dark:border-zinc-800">
-            <Button onClick={onFechar} variant="soft" className="cursor-pointer">
+          {/* Footer - fixo */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 p-4 sm:p-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
+            <Button onClick={onFechar} variant="soft" className="cursor-pointer w-full sm:w-auto">
               Cancelar
             </Button>
             <Button
               onClick={remarcar}
               disabled={!horarioSelecionado || salvando}
-              className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer"
+              className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer w-full sm:w-auto"
             >
               {salvando ? "Remarcando..." : "Remarcar e Notificar"}
             </Button>

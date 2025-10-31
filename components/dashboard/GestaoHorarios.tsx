@@ -205,20 +205,20 @@ export function GestaoHorarios() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
             Horário de Funcionamento
           </h2>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-1">
             Configure os horários que aparecem em todo o site
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Button
             onClick={() => setModalBloqueioAberto(true)}
             variant="outline"
-            className="cursor-pointer"
+            className="cursor-pointer w-full sm:w-auto"
           >
             <Ban className="w-4 h-4 mr-2" />
             Bloquear Horário
@@ -226,7 +226,7 @@ export function GestaoHorarios() {
           <Button
             onClick={salvarHorarios}
             disabled={salvando}
-            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer"
+            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 cursor-pointer w-full sm:w-auto"
           >
             <Save className="w-4 h-4 mr-2" />
             {salvando ? 'Salvando...' : 'Salvar Alterações'}
@@ -268,19 +268,19 @@ export function GestaoHorarios() {
                 key={dia.key}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="p-6 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                className="p-4 sm:p-6 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   {/* Dia da semana */}
-                  <div className="flex-1 min-w-[150px]">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
                       {dia.label}
                     </h3>
                   </div>
 
                   {/* Switch Aberto/Fechado */}
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <span className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                       {horarioDia.aberto ? 'Aberto' : 'Fechado'}
                     </span>
                     <Switch
@@ -288,15 +288,15 @@ export function GestaoHorarios() {
                       onCheckedChange={(checked) => 
                         atualizarHorario(dia.key as keyof HorarioSemana, 'aberto', checked)
                       }
-                      className="cursor-pointer"
+                      className="cursor-pointer flex-shrink-0"
                     />
                   </div>
 
                   {/* Horários */}
                   {horarioDia.aberto && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <label className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                           De:
                         </label>
                         <input
@@ -305,12 +305,12 @@ export function GestaoHorarios() {
                           onChange={(e) => 
                             atualizarHorario(dia.key as keyof HorarioSemana, 'inicio', e.target.value)
                           }
-                          className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white"
+                          className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white min-w-[120px]"
                         />
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <label className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                           Até:
                         </label>
                         <input
@@ -319,7 +319,7 @@ export function GestaoHorarios() {
                           onChange={(e) => 
                             atualizarHorario(dia.key as keyof HorarioSemana, 'fim', e.target.value)
                           }
-                          className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white"
+                          className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white min-w-[120px]"
                         />
                       </div>
                     </div>

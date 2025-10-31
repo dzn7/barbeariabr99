@@ -185,12 +185,12 @@ export function RemarcacaoAgendamento() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
             Remarcação de Agendamentos
           </h2>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-1">
             Altere data/hora e notifique o cliente automaticamente
           </p>
         </div>
@@ -201,36 +201,38 @@ export function RemarcacaoAgendamento() {
       </div>
 
       {/* Barra de Seleção Múltipla */}
-      <div className="flex items-center justify-between gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg">
         <button
           onClick={() => {
             setModoSelecao(!modoSelecao);
             setAgendamentosSelecionados([]);
           }}
-          className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium"
+          className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium w-full sm:w-auto"
         >
           {modoSelecao ? 'Cancelar Seleção' : 'Selecionar Múltiplos'}
         </button>
 
         {modoSelecao && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400 text-center sm:text-left">
               {agendamentosSelecionados.length} selecionado(s)
             </span>
-            <button
-              onClick={selecionarTodos}
-              className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {agendamentosSelecionados.length === agendamentos.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
-            </button>
-            {agendamentosSelecionados.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
-                onClick={deletarSelecionados}
-                className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+                onClick={selecionarTodos}
+                className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors w-full sm:w-auto"
               >
-                Deletar Selecionados
+                {agendamentosSelecionados.length === agendamentos.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
               </button>
-            )}
+              {agendamentosSelecionados.length > 0 && (
+                <button
+                  onClick={deletarSelecionados}
+                  className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors w-full sm:w-auto"
+                >
+                  Deletar Selecionados
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -265,29 +267,29 @@ export function RemarcacaoAgendamento() {
                 exit={{ opacity: 0, y: -20 }}
                 className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   {/* Checkbox para seleção múltipla */}
                   {modoSelecao && (
                     <input
                       type="checkbox"
                       checked={agendamentosSelecionados.includes(agendamento.id)}
                       onChange={() => toggleSelecao(agendamento.id)}
-                      className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-2 focus:ring-zinc-900 cursor-pointer"
+                      className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-2 focus:ring-zinc-900 cursor-pointer mt-1"
                     />
                   )}
 
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-4">
+                  <div className="flex-1 space-y-3 w-full">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                       <div className="flex items-center gap-2 text-zinc-900 dark:text-white">
-                        <Calendar className="w-5 h-5" />
-                        <span className="font-semibold">
+                        <Calendar className="w-5 h-5 flex-shrink-0" />
+                        <span className="font-semibold text-sm sm:text-base">
                           {format(parseISO(agendamento.data_hora), "dd/MM/yyyy 'às' HH:mm", {
                             locale: ptBR,
                           })}
                         </span>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                           agendamento.status === "confirmado"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                             : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
@@ -296,23 +298,23 @@ export function RemarcacaoAgendamento() {
                         {agendamento.status}
                       </span>
                       {agendamento.foi_remarcado && (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center gap-1">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center gap-1 whitespace-nowrap">
                           🔄 Remarcado {agendamento.total_remarcacoes}x
                         </span>
                       )}
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-sm text-zinc-600 dark:text-zinc-400">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>{agendamento.clientes.nome}</span>
+                        <User className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{agendamento.clientes.nome}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Scissors className="w-4 h-4" />
-                        <span>{agendamento.servicos.nome}</span>
+                        <Scissors className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{agendamento.servicos.nome}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-4 h-4 flex-shrink-0" />
                         <span>{agendamento.servicos.duracao} min</span>
                       </div>
                     </div>
@@ -322,7 +324,7 @@ export function RemarcacaoAgendamento() {
                     <Button
                       onClick={() => abrirModal(agendamento)}
                       variant="soft"
-                      className="cursor-pointer"
+                      className="cursor-pointer w-full sm:w-auto mt-4 sm:mt-0"
                     >
                       <Edit2 className="w-4 h-4 mr-2" />
                       Remarcar

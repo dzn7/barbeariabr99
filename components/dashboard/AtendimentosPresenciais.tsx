@@ -203,86 +203,158 @@ export function AtendimentosPresenciais() {
         </motion.div>
       </div>
 
-      {/* Lista de Atendimentos */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Data/Hora
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Barbeiro
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Serviço
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Valor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Pagamento
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {atendimentos.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                    Nenhum atendimento registrado hoje
-                  </td>
-                </tr>
-              ) : (
-                atendimentos.map((atendimento) => (
-                  <tr key={atendimento.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      {new Date(atendimento.data).toLocaleString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {atendimento.cliente_nome}
-                        </div>
-                        {atendimento.cliente_telefone && (
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2 mt-1">
-                            <Phone className="w-3 h-3" />
-                            {atendimento.cliente_telefone}
-                            <a
-                              href={`https://wa.me/55${atendimento.cliente_telefone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 transition-colors"
-                              title="Enviar WhatsApp"
-                            >
-                              <WhatsAppIcon size={14} />
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      {atendimento.barbeiros?.nome || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      {atendimento.servicos?.nome || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      R$ {atendimento.valor.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
-                      {atendimento.forma_pagamento}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Lista de Atendimentos - Layout Responsivo */}
+      {atendimentos.length === 0 ? (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 text-center">
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Nenhum atendimento registrado hoje
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Versão Mobile - Cards */}
+          <div className="block md:hidden space-y-4">
+            {atendimentos.map((atendimento) => (
+              <motion.div
+                key={atendimento.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-zinc-900 dark:text-white">{atendimento.cliente_nome}</h3>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                        {new Date(atendimento.data).toLocaleString('pt-BR', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
+                    <span className="px-2 py-1 text-xs bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-600 dark:text-zinc-400">
+                      {atendimento.forma_pagamento}
+                    </span>
+                  </div>
+                  
+                  {atendimento.cliente_telefone && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Phone className="w-3 h-3" />
+                      <span>{atendimento.cliente_telefone}</span>
+                      <a
+                        href={`https://wa.me/55${atendimento.cliente_telefone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 transition-colors ml-auto"
+                        title="Enviar WhatsApp"
+                      >
+                        <WhatsAppIcon size={16} />
+                      </a>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Barbeiro:</span>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1">
+                        {atendimento.barbeiros?.nome || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Serviço:</span>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1">
+                        {atendimento.servicos?.nome || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Valor:</span>
+                      <p className="text-lg font-bold text-zinc-900 dark:text-white">R$ {atendimento.valor.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Versão Desktop - Tabela */}
+          <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full">
+                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Data/Hora
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Cliente
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Barbeiro
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Serviço
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Valor
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Pagamento
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {atendimentos.map((atendimento) => (
+                    <tr key={atendimento.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {new Date(atendimento.data).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            {atendimento.cliente_nome}
+                          </div>
+                          {atendimento.cliente_telefone && (
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2 mt-1">
+                              <Phone className="w-3 h-3" />
+                              {atendimento.cliente_telefone}
+                              <a
+                                href={`https://wa.me/55${atendimento.cliente_telefone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 transition-colors"
+                                title="Enviar WhatsApp"
+                              >
+                                <WhatsAppIcon size={14} />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {atendimento.barbeiros?.nome || 'N/A'}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {atendimento.servicos?.nome || 'N/A'}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        R$ {atendimento.valor.toFixed(2)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                        {atendimento.forma_pagamento}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal de Novo Atendimento */}
       {modalAberto && (

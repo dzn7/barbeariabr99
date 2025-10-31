@@ -444,57 +444,39 @@ export function GestaoEstoque() {
         </motion.div>
       </div>
 
-      {/* Lista de Produtos */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Produto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Categoria
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Estoque
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Preço Compra
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Preço Venda
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {produtos.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                    Nenhum produto cadastrado
-                  </td>
-                </tr>
-              ) : (
-                produtos.map((produto) => (
-                  <tr key={produto.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      <div>
-                        <div className="font-medium">{produto.nome}</div>
-                        {produto.descricao && (
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {produto.descricao}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
+      {/* Lista de Produtos - Layout Responsivo */}
+      {produtos.length === 0 ? (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 text-center">
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Nenhum produto cadastrado
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Versão Mobile - Cards */}
+          <div className="block md:hidden space-y-4">
+            {produtos.map((produto) => (
+              <motion.div
+                key={produto.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-zinc-900 dark:text-white">{produto.nome}</h3>
+                    {produto.descricao && (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{produto.descricao}</p>
+                    )}
+                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-600 dark:text-zinc-400">
                       {produto.categoria}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center gap-2">
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Estoque:</span>
+                      <div className="flex items-center gap-2 mt-1">
                         <span className={`font-medium ${
                           (produto.quantidadeEstoque || 0) <= (produto.quantidadeMinima || 0)
                             ? 'text-red-600'
@@ -506,51 +488,155 @@ export function GestaoEstoque() {
                           <AlertTriangle className="w-4 h-4 text-red-600" />
                         )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      R$ {(produto.precoCompra || 0).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      R$ {(produto.precoVenda || 0).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex gap-2">
-                        <Button 
-                          size="1" 
-                          variant="soft" 
-                          className="cursor-pointer"
-                          title="Entrada de estoque"
-                        >
-                          <TrendingUp className="w-3 h-3" />
-                        </Button>
-                        <Button 
-                          size="1" 
-                          variant="soft" 
-                          color="orange" 
-                          className="cursor-pointer"
-                          title="Saída de estoque"
-                        >
-                          <TrendingDown className="w-3 h-3" />
-                        </Button>
-                        <Button 
-                          size="1" 
-                          variant="soft" 
-                          color="red" 
-                          className="cursor-pointer"
-                          onClick={() => confirmarDelecao(produto.id, produto.nome)}
-                          title="Excluir produto"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </td>
+                    </div>
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Preço Venda:</span>
+                      <p className="font-medium text-zinc-900 dark:text-white mt-1">R$ {(produto.precoVenda || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">Preço Compra:</span>
+                    <p className="text-sm text-zinc-900 dark:text-white">R$ {(produto.precoCompra || 0).toFixed(2)}</p>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      size="2" 
+                      variant="soft" 
+                      className="flex-1 cursor-pointer"
+                      title="Entrada de estoque"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      Entrada
+                    </Button>
+                    <Button 
+                      size="2" 
+                      variant="soft" 
+                      color="orange" 
+                      className="flex-1 cursor-pointer"
+                      title="Saída de estoque"
+                    >
+                      <TrendingDown className="w-4 h-4 mr-1" />
+                      Saída
+                    </Button>
+                    <Button 
+                      size="2" 
+                      variant="soft" 
+                      color="red" 
+                      className="cursor-pointer"
+                      onClick={() => confirmarDelecao(produto.id, produto.nome)}
+                      title="Excluir produto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Versão Desktop - Tabela */}
+          <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full">
+                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Produto
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Categoria
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Estoque
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Preço Compra
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Preço Venda
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Ações
+                    </th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {produtos.map((produto) => (
+                    <tr key={produto.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        <div>
+                          <div className="font-medium">{produto.nome}</div>
+                          {produto.descricao && (
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {produto.descricao}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {produto.categoria}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${
+                            (produto.quantidadeEstoque || 0) <= (produto.quantidadeMinima || 0)
+                              ? 'text-red-600'
+                              : 'text-zinc-900 dark:text-zinc-100'
+                          }`}>
+                            {produto.quantidadeEstoque || 0}
+                          </span>
+                          {(produto.quantidadeEstoque || 0) <= (produto.quantidadeMinima || 0) && (
+                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        R$ {(produto.precoCompra || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        R$ {(produto.precoVenda || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <Button 
+                            size="1" 
+                            variant="soft" 
+                            className="cursor-pointer"
+                            title="Entrada de estoque"
+                          >
+                            <TrendingUp className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            size="1" 
+                            variant="soft" 
+                            color="orange" 
+                            className="cursor-pointer"
+                            title="Saída de estoque"
+                          >
+                            <TrendingDown className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            size="1" 
+                            variant="soft" 
+                            color="red" 
+                            className="cursor-pointer"
+                            onClick={() => confirmarDelecao(produto.id, produto.nome)}
+                            title="Excluir produto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal de Feedback */}
       <Dialog.Root open={modalFeedback.aberto} onOpenChange={(aberto) => setModalFeedback({ ...modalFeedback, aberto })}>

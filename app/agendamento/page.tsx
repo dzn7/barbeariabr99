@@ -298,6 +298,8 @@ export default function PaginaAgendamento() {
 
   // Buscar horários ocupados quando data e barbeiro são selecionados
   useEffect(() => {
+    let channel: any = null;
+    
     const buscarHorariosOcupados = async () => {
       if (!dataSelecionada || !barbeiroSelecionado) {
         setHorariosOcupados([]);
@@ -321,7 +323,8 @@ export default function PaginaAgendamento() {
           fimDia: fimDia.toISOString()
         });
 
-        const { data, error } = await supabase
+        // Buscar agendamentos
+        const { data: agendamentosData, error: errorAgendamentos } = await supabase
           .from('agendamentos')
           .select(`
             id, 
@@ -334,24 +337,82 @@ export default function PaginaAgendamento() {
           .lte('data_hora', fimDia.toISOString())
           .neq('status', 'cancelado');
 
-        if (error) {
-          console.error('❌ Erro ao buscar horários:', error);
-          throw error;
+        if (errorAgendamentos) {
+          console.error('❌ Erro ao buscar agendamentos:', errorAgendamentos);
+          throw errorAgendamentos;
         }
 
-        console.log('✅ [CLIENTE] Agendamentos encontrados:', data?.length || 0);
-        console.log('📋 [CLIENTE] Dados completos:', data);
+        console.log('✅ [CLIENTE] Agendamentos encontrados:', agendamentosData?.length || 0);
         
-        // Converter para o novo formato: {horario, duracao}
-        const ocupados = (data || []).map((ag: any) => {
+        // Buscar horários bloqueados (para todos os barbeiros ou para o barbeiro específico)
+        const { data: bloqueiosData, error: errorBloqueios } = await supabase
+          .from('horarios_bloqueados')
+          .select('*')
+          .eq('data', dataSelecionada)
+          .or(`barbeiro_id.is.null,barbeiro_id.eq.${barbeiroSelecionado}`);
+
+        if (errorBloqueios) {
+          console.error('❌ Erro ao buscar bloqueios:', errorBloqueios);
+          // Não lançar erro, apenas logar, pois bloqueios são opcionais
+        }
+
+        console.log('🔒 [CLIENTE] Bloqueios encontrados:', bloqueiosData?.length || 0);
+        
+        // Converter agendamentos para o formato: {horario, duracao}
+        const ocupadosAgendamentos = (agendamentosData || []).map((ag: any) => {
           const horario = format(new Date(ag.data_hora), 'HH:mm');
-          const duracao = ag.servicos?.duracao || 30; // Padrão 30 minutos
-          console.log(`🔴 Horário ocupado: ${horario} (${duracao} min)`, ag);
+          const duracao = ag.servicos?.duracao || 30;
+          console.log(`🔴 Horário ocupado (agendamento): ${horario} (${duracao} min)`, ag);
           return { horario, duracao };
         });
+
+        // Converter bloqueios para o formato: {horario, duracao}
+        const ocupadosBloqueios: Array<{horario: string, duracao: number}> = [];
+        if (bloqueiosData) {
+          bloqueiosData.forEach((bloqueio: any) => {
+            // Extrair apenas HH:mm dos horários
+            const horaInicioStr = bloqueio.horario_inicio.substring(0, 5); // "09:00:00" -> "09:00"
+            const horaFimStr = bloqueio.horario_fim.substring(0, 5);
+            
+            const dataBase = new Date(2000, 0, 1);
+            const inicioBloqueio = parse(horaInicioStr, 'HH:mm', dataBase);
+            const fimBloqueio = parse(horaFimStr, 'HH:mm', dataBase);
+            
+            // Calcular duração total do bloqueio em minutos
+            const duracaoTotalMinutos = Math.ceil((fimBloqueio.getTime() - inicioBloqueio.getTime()) / 60000);
+            
+            // Se o bloqueio cobre múltiplos intervalos de 20min, criar entradas para cada um
+            let horarioAtual = inicioBloqueio;
+            while (horarioAtual < fimBloqueio) {
+              const horarioFormatado = format(horarioAtual, 'HH:mm');
+              
+              // Calcular quanto tempo falta até o fim do bloqueio
+              const tempoRestante = Math.ceil((fimBloqueio.getTime() - horarioAtual.getTime()) / 60000);
+              // Duração mínima de 20 minutos ou o que restar
+              const duracaoBloqueio = Math.min(20, tempoRestante);
+              
+              ocupadosBloqueios.push({
+                horario: horarioFormatado,
+                duracao: duracaoBloqueio
+              });
+              
+              // Avançar 20 minutos
+              horarioAtual = new Date(horarioAtual.getTime() + 20 * 60000);
+            }
+            
+            console.log(`🔒 Horário bloqueado: ${horaInicioStr} - ${horaFimStr} (${duracaoTotalMinutos} min)`, bloqueio);
+          });
+        }
         
-        setHorariosOcupados(ocupados as any);
-        console.log('📊 [CLIENTE] Total de horários ocupados:', ocupados.length, ocupados);
+        // Combinar agendamentos e bloqueios
+        const todosOcupados = [...ocupadosAgendamentos, ...ocupadosBloqueios];
+        
+        setHorariosOcupados(todosOcupados as any);
+        console.log('📊 [CLIENTE] Total de horários ocupados:', todosOcupados.length, {
+          agendamentos: ocupadosAgendamentos.length,
+          bloqueios: ocupadosBloqueios.length,
+          total: todosOcupados.length
+        });
       } catch (error) {
         console.error('❌ Erro ao buscar horários ocupados:', error);
       }
@@ -359,9 +420,9 @@ export default function PaginaAgendamento() {
 
     buscarHorariosOcupados();
 
-    // 🔥 REALTIME: Escutar mudanças em agendamentos e recarregar
+    // 🔥 REALTIME: Escutar mudanças em agendamentos e bloqueios
     if (dataSelecionada && barbeiroSelecionado) {
-      const channel = supabase
+      channel = supabase
         .channel(`horarios-${barbeiroSelecionado}-${dataSelecionada}`)
         .on(
           'postgres_changes',
@@ -372,21 +433,46 @@ export default function PaginaAgendamento() {
             filter: `barbeiro_id=eq.${barbeiroSelecionado}`
           },
           (payload) => {
-            console.log('🔄 [REALTIME] Mudança detectada, recarregando horários...', payload);
-            // Recarregar horários ao invés de tentar manipular o array
+            console.log('🔄 [REALTIME] Mudança em agendamento detectada, recarregando horários...', payload);
             buscarHorariosOcupados();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'horarios_bloqueados'
+          },
+          (payload) => {
+            console.log('🔄 [REALTIME] Mudança em bloqueio detectada, recarregando horários...', payload);
+            // Verificar se o bloqueio afeta esta data e barbeiro
+            const bloqueio = payload.new || payload.old;
+            if (bloqueio) {
+              const bloqueioData = bloqueio.data;
+              const bloqueioBarbeiroId = bloqueio.barbeiro_id;
+              
+              // Recarregar se for para todos os barbeiros ou para o barbeiro selecionado
+              if (!bloqueioBarbeiroId || bloqueioBarbeiroId === barbeiroSelecionado) {
+                if (bloqueioData === dataSelecionada) {
+                  buscarHorariosOcupados();
+                }
+              }
+            }
           }
         )
         .subscribe((status) => {
           console.log('📡 [REALTIME] Status:', status);
         });
+    }
 
-      return () => {
+    return () => {
+      if (channel) {
         console.log('🔌 [REALTIME] Desconectando...');
         supabase.removeChannel(channel);
-      };
-    }
-  }, [dataSelecionada, barbeiroSelecionado]);
+      }
+    };
+  }, [dataSelecionada, barbeiroSelecionado, barbeiros]);
 
   // Gera datas disponíveis (hoje + 15 dias) filtrando por dias de funcionamento
   const todasDatas = gerarDatasDisponiveis();
@@ -499,7 +585,7 @@ export default function PaginaAgendamento() {
       console.log('💾 Salvo no banco (UTC):', dataHora.toISOString());
       console.log('🇧🇷 Exibido como:', format(dataHora, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
 
-      // 3. Verificar se horário está disponível
+      // 3. Verificar se horário está disponível (agendamentos)
       const { data: horarioExistente, error: erroVerificacao } = await supabase
         .from('agendamentos')
         .select('id')
@@ -518,6 +604,42 @@ export default function PaginaAgendamento() {
         setCarregando(false);
         setEtapa(2); // Voltar para seleção de data/hora
         return;
+      }
+
+      // 3.1 Verificar se horário está bloqueado
+      const horarioFormatado = format(dataHora, 'HH:mm');
+      const dataFormatada = format(dataHora, 'yyyy-MM-dd');
+      
+      const { data: bloqueiosData, error: erroBloqueios } = await supabase
+        .from('horarios_bloqueados')
+        .select('*')
+        .eq('data', dataFormatada)
+        .or(`barbeiro_id.is.null,barbeiro_id.eq.${barbeiroSelecionado}`);
+
+      if (erroBloqueios) {
+        console.error('Erro ao verificar bloqueios:', erroBloqueios);
+        // Não bloquear agendamento por erro na busca de bloqueios
+      } else if (bloqueiosData && bloqueiosData.length > 0) {
+        // Verificar se o horário está dentro de algum bloqueio
+        const horarioEstaBloqueado = bloqueiosData.some((bloqueio: any) => {
+          const horaInicioStr = bloqueio.horario_inicio.substring(0, 5);
+          const horaFimStr = bloqueio.horario_fim.substring(0, 5);
+          
+          const dataBase = new Date(2000, 0, 1);
+          const inicioBloqueio = parse(horaInicioStr, 'HH:mm', dataBase);
+          const fimBloqueio = parse(horaFimStr, 'HH:mm', dataBase);
+          const horarioAtual = parse(horarioFormatado, 'HH:mm', dataBase);
+          
+          // Verificar se o horário está dentro do período bloqueado
+          return (horarioAtual >= inicioBloqueio && horarioAtual < fimBloqueio);
+        });
+
+        if (horarioEstaBloqueado) {
+          alert('❌ Este horário está bloqueado e não está disponível para agendamento. Por favor, escolha outro horário.');
+          setCarregando(false);
+          setEtapa(2); // Voltar para seleção de data/hora
+          return;
+        }
       }
 
       console.log('Horário verificado e disponível');

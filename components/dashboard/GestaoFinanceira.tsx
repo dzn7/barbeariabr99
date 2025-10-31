@@ -270,9 +270,9 @@ export function GestaoFinanceira() {
 
       {/* Filtros */}
       <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4">
           <Select.Root defaultValue="todos">
-            <Select.Trigger className="w-40" />
+            <Select.Trigger className="w-full sm:w-40" />
             <Select.Content>
               <Select.Item value="todos">Todos</Select.Item>
               <Select.Item value="receita">Receitas</Select.Item>
@@ -282,110 +282,187 @@ export function GestaoFinanceira() {
 
           <TextField.Root
             type="date"
-            className="w-40"
+            className="w-full sm:w-40"
             placeholder="Data início"
           />
 
           <TextField.Root
             type="date"
-            className="w-40"
+            className="w-full sm:w-40"
             placeholder="Data fim"
           />
 
-          <Button variant="outline" className="cursor-pointer">
+          <Button variant="outline" className="cursor-pointer w-full sm:w-auto">
             <Filter className="w-4 h-4 mr-2" />
             Filtrar
           </Button>
 
-          <Button variant="outline" className="cursor-pointer ml-auto">
+          <Button variant="outline" className="cursor-pointer w-full sm:w-auto sm:ml-auto">
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
         </div>
       </div>
 
-      {/* Lista de Transações */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Data
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Categoria
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Descrição
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Valor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Pagamento
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {transacoes.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                    Nenhuma transação registrada
-                  </td>
-                </tr>
-              ) : (
-                transacoes.map((transacao) => (
-                  <tr key={transacao.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      {new Date(transacao.data).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        transacao.tipo === 'receita'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                      }`}>
-                        {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                      {transacao.categoria}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      {transacao.descricao}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      R$ {transacao.valor.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
-                      {transacao.forma_pagamento}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Button 
-                        size="1" 
-                        variant="soft" 
-                        color="red" 
-                        className="cursor-pointer"
-                        onClick={() => confirmarDelecao(transacao.id, transacao.descricao)}
-                        title="Excluir transação"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Lista de Transações - Layout Responsivo */}
+      {transacoes.length === 0 ? (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 text-center">
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Nenhuma transação registrada
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Versão Mobile - Cards */}
+          <div className="block md:hidden space-y-4">
+            {transacoes.map((transacao) => (
+              <motion.div
+                key={transacao.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          transacao.tipo === 'receita'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        }`}>
+                          {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {new Date(transacao.data).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                      <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">
+                        {transacao.descricao}
+                      </h3>
+                    </div>
+                    <Button 
+                      size="1" 
+                      variant="soft" 
+                      color="red" 
+                      className="cursor-pointer flex-shrink-0"
+                      onClick={() => confirmarDelecao(transacao.id, transacao.descricao)}
+                      title="Excluir transação"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Categoria:</span>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1">{transacao.categoria}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Pagamento:</span>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1">{transacao.forma_pagamento}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Valor:</span>
+                      <p className={`text-lg font-bold ${
+                        transacao.tipo === 'receita' 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {transacao.tipo === 'receita' ? '+' : '-'} R$ {transacao.valor.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Versão Desktop - Tabela */}
+          <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full">
+                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Data
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Tipo
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Categoria
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Descrição
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Valor
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Pagamento
+                    </th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {transacoes.map((transacao) => (
+                    <tr key={transacao.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {new Date(transacao.data).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          transacao.tipo === 'receita'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        }`}>
+                          {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                        </span>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                        {transacao.categoria}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 max-w-xs">
+                        <div className="truncate" title={transacao.descricao}>
+                          {transacao.descricao}
+                        </div>
+                      </td>
+                      <td className={`px-4 lg:px-6 py-4 text-sm font-medium ${
+                        transacao.tipo === 'receita' 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {transacao.tipo === 'receita' ? '+' : '-'} R$ {transacao.valor.toFixed(2)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                        {transacao.forma_pagamento}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm">
+                        <Button 
+                          size="1" 
+                          variant="soft" 
+                          color="red" 
+                          className="cursor-pointer"
+                          onClick={() => confirmarDelecao(transacao.id, transacao.descricao)}
+                          title="Excluir transação"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal de Nova Transação */}
       {modalAberto && (

@@ -29,7 +29,7 @@ interface Agendamento {
 
 const HORAS_DIA = Array.from({ length: 12 }, (_, i) => i + 8); // 08:00 às 19:00
 const DIAS_SEMANA = ['DOM.', 'SEG.', 'TER.', 'QUA.', 'QUI.', 'SEX.', 'SÁB.'];
-const ALTURA_HORA = 120; // Altura em pixels de cada hora (maior para cards legíveis)
+const ALTURA_HORA = 80; // Altura em pixels de cada hora (otimizada para melhor visualização)
 
 const CORES_STATUS = {
   pendente: 'bg-yellow-600',
@@ -364,14 +364,14 @@ export function CalendarioSemanal() {
         </div>
 
         {/* Grade de Horários - APENAS UM DIA */}
-        <div className="relative border-t border-zinc-200 dark:border-zinc-800 pt-4">
-          <div className="flex">
+        <div className="relative border-t border-zinc-200 dark:border-zinc-800 pt-4 overflow-x-auto">
+          <div className="flex min-w-[400px]">
             {/* Coluna de horas */}
-            <div className="w-20 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800">
+            <div className="w-16 sm:w-20 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800">
               {horariosExibir.map((hora) => (
                 <div
                   key={hora}
-                  className="px-2 py-1 text-sm font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800"
+                  className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800"
                   style={{ height: `${ALTURA_HORA}px` }}
                 >
                   {String(hora).padStart(2, '0')}:00
@@ -391,37 +391,117 @@ export function CalendarioSemanal() {
               ))}
 
               {/* Agendamentos */}
-              <div className="absolute inset-0 px-2">
+              <div className="absolute inset-0 px-1 sm:px-2">
                 {agendamentos.map((agendamento) => {
                   const { top, height } = calcularPosicaoAgendamento(
                     agendamento.data_hora,
                     agendamento.servicos?.duracao || 40
                   );
                   const cor = CORES_STATUS[agendamento.status as keyof typeof CORES_STATUS] || CORES_STATUS.pendente;
+                  const alturaMinima = Math.max(height, 75);
+                  const horaInicio = format(parseISO(agendamento.data_hora), 'HH:mm');
+                  const horaFim = format(new Date(new Date(agendamento.data_hora).getTime() + (agendamento.servicos?.duracao || 40) * 60000), 'HH:mm');
+                  const temEspacoParaBarbeiro = alturaMinima >= 110;
 
                   return (
                     <motion.div
                       key={agendamento.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
                       onClick={() => {
                         setAgendamentoSelecionado(agendamento);
                         setModalDetalhesAberto(true);
                       }}
-                      className={`absolute left-2 right-2 ${cor} rounded-lg p-3 text-white shadow-lg cursor-pointer overflow-hidden hover:scale-105 transition-transform`}
+                      className={`absolute left-1 right-1 sm:left-2 sm:right-2 ${cor} rounded-lg text-white shadow-lg cursor-pointer overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-200 border-l-4 ${
+                        agendamento.status === 'confirmado' ? 'border-teal-300' :
+                        agendamento.status === 'concluido' ? 'border-green-300' :
+                        agendamento.status === 'cancelado' ? 'border-red-300' :
+                        'border-yellow-300'
+                      }`}
                       style={{
                         top: `${top}px`,
-                        height: `${Math.max(height, 60)}px`,
+                        height: `${alturaMinima}px`,
+                        minHeight: '75px',
                       }}
                     >
-                      <div className="text-sm font-bold mb-1">
-                        {format(parseISO(agendamento.data_hora), 'HH:mm')} - {format(new Date(new Date(agendamento.data_hora).getTime() + (agendamento.servicos?.duracao || 40) * 60000), 'HH:mm')}
-                      </div>
-                      <div className="text-base font-semibold truncate">
-                        {agendamento.clientes?.nome}
-                      </div>
-                      <div className="text-sm opacity-90 truncate">
-                        {agendamento.servicos?.nome}
+                      <div className="h-full flex flex-col p-2.5 sm:p-3 relative">
+                        {/* Badge de status no canto superior direito */}
+                        <div className="absolute top-2 right-2 z-10">
+                          <div className={`w-2 h-2 rounded-full shadow-sm ${
+                            agendamento.status === 'confirmado' ? 'bg-teal-200' :
+                            agendamento.status === 'concluido' ? 'bg-green-200' :
+                            agendamento.status === 'cancelado' ? 'bg-red-200' :
+                            'bg-yellow-200'
+                          }`} />
+                        </div>
+
+                        {/* Cabeçalho com horário */}
+                        <div className="flex items-center gap-1.5 mb-2 flex-shrink-0 pr-6">
+                          <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-90 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm font-bold leading-none">
+                            {horaInicio} - {horaFim}
+                          </span>
+                          {agendamento.observacoes && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/70 flex-shrink-0 ml-auto" title="Tem observações" />
+                          )}
+                        </div>
+
+                        {/* Conteúdo principal */}
+                        <div className="flex-1 min-h-0 flex flex-col gap-1.5 pr-1">
+                          {/* Nome do cliente */}
+                          <div className="flex items-start gap-1.5 min-h-0">
+                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-90 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p 
+                                className="text-sm sm:text-base font-semibold leading-snug text-white break-words"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: temEspacoParaBarbeiro ? 2 : 1,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  wordBreak: 'break-word',
+                                }}
+                                title={agendamento.clientes?.nome || 'Cliente não informado'}
+                              >
+                                {agendamento.clientes?.nome || 'Cliente não informado'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Serviço */}
+                          <div className="flex items-start gap-1.5 min-h-0">
+                            <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-85 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p 
+                                className="text-xs sm:text-sm opacity-95 leading-snug text-white break-words"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: temEspacoParaBarbeiro ? 2 : 1,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  wordBreak: 'break-word',
+                                }}
+                                title={agendamento.servicos?.nome || 'Serviço não informado'}
+                              >
+                                {agendamento.servicos?.nome || 'Serviço não informado'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Barbeiro (apenas se houver espaço suficiente e não for redundante) */}
+                          {temEspacoParaBarbeiro && agendamento.barbeiros?.nome && (
+                            <div className="flex items-center gap-1.5 mt-auto pt-1 flex-shrink-0 border-t border-white/20">
+                              <div className="w-1.5 h-1.5 rounded-full bg-white/50 flex-shrink-0" />
+                              <span 
+                                className="text-xs opacity-75 text-white truncate"
+                                title={agendamento.barbeiros.nome}
+                              >
+                                {agendamento.barbeiros.nome}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   );
