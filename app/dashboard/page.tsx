@@ -233,7 +233,7 @@ export default function DashboardCompleto() {
       <NotificationPermission />
       
       {/* Navbar Exclusiva do Dashboard */}
-      <header className="bg-white dark:bg-[#1a1a1a] border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-50 w-full">
+      <header className="bg-white dark:bg-[#1a1a1a] border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40 w-full">
         <div className="container mx-auto px-4 max-w-full">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}

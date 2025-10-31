@@ -51,6 +51,11 @@ export function AtendimentosPresenciais() {
 
       setBarbeiros(barbeirosData || []);
       setServicos(servicosData || []);
+      
+      // Selecionar automaticamente o primeiro barbeiro
+      if (barbeirosData && barbeirosData.length > 0) {
+        setBarbeiroId(barbeirosData[0].id);
+      }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     }
@@ -83,6 +88,27 @@ export function AtendimentosPresenciais() {
   };
 
   const salvarAtendimento = async () => {
+    // Validar campos obrigatórios
+    if (!clienteNome.trim()) {
+      alert("❌ Por favor, digite o nome do cliente");
+      return;
+    }
+    
+    if (!barbeiroId) {
+      alert("❌ Por favor, selecione um barbeiro");
+      return;
+    }
+    
+    if (!servicoId) {
+      alert("❌ Por favor, selecione um serviço");
+      return;
+    }
+    
+    if (!valor || parseFloat(valor) <= 0) {
+      alert("❌ Por favor, digite um valor válido");
+      return;
+    }
+    
     setCarregando(true);
     try {
       const { data, error } = await supabase
@@ -106,7 +132,7 @@ export function AtendimentosPresenciais() {
       // Limpar formulário
       setClienteNome("");
       setClienteTelefone("");
-      setBarbeiroId("");
+      setBarbeiroId(barbeiros.length > 0 ? barbeiros[0].id : "");
       setServicoId("");
       setValor("");
       setFormaPagamento("dinheiro");
@@ -114,9 +140,11 @@ export function AtendimentosPresenciais() {
 
       // Recarregar atendimentos
       buscarAtendimentos();
+      
+      alert("✅ Atendimento registrado com sucesso!");
     } catch (error: any) {
       console.error('Erro ao salvar atendimento:', error);
-      alert(`Erro ao salvar: ${error.message}`);
+      alert(`❌ Erro ao salvar: ${error.message}`);
     } finally {
       setCarregando(false);
     }
